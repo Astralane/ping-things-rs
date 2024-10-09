@@ -2,7 +2,10 @@
 A small benchmarking tool for Solana transaction sends.
 
 ## What it is
-ping-thing-rs is a small benchmarking tool designed for sending transactions on the Solana blockchain. It helps users evaluate the performance and throughput of their transaction sends.
+`ping-things-rs` is a small benchmarking tool based on [ping-thing-client](https://github.com/Block-Logic/ping-thing-client), designed for sending 
+transactions on the Solana blockchain. It helps users evaluate the performance 
+and throughput of rpc providers sends by sending similar transactions to multiple
+rpcs at the same time as provided in `config.yaml`
 
 ## How to Run
 ### Clone the repository:
@@ -25,8 +28,8 @@ The configuration is managed via a config.yaml file. Below is an example of what
 
 ```yaml
 rpc :
-"solana-public" :
-url: "https://api.mainnet-beta.solana.com"
+  "solana-public" :
+    url: "https://api.mainnet-beta.solana.com"
 
 txns_per_run: 2
 txn_delay: 2
