@@ -23,7 +23,7 @@ cargo build --release
 ## How to Configure
 The configuration is managed via a config.yaml file. Below is an example of what this file looks like:
 
-```
+```yaml
 rpc :
 "solana-public" :
 url: "https://api.mainnet-beta.solana.com"
