@@ -1,0 +1,13 @@
+rpc :
+  "solana-public" :
+      url: "https://api.mainnet-beta.solana.com"
+
+txns_per_run: 2
+txn_delay: 2
+runs: 2
+rpc_for_read: "https://api.mainnet-beta.solana.com"
+keypair_dir: "/Users/<user>/.config/solana/id.json"
+enable_priority_fee: true
+compute_unit_price: 0
+compute_unit_limit: 450
+verbose_log: false
