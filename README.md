@@ -1,4 +1,4 @@
-# ping-thing-rs
+# ping-things-rs
 A small benchmarking tool for Solana transaction sends.
 
 ## What it is
