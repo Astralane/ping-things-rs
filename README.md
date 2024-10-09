@@ -37,15 +37,15 @@ enable_priority_fee: true
 compute_unit_price: 0
 compute_unit_limit: 450
 verbose_log: false
-Configuration Options
-rpc: RPC endpoints for the Solana cluster.
-txns_per_run: Number of transactions per run.
-txn_delay: Delay between transactions in seconds.
-runs: Number of runs to execute.
-rpc_for_read: RPC endpoint used for reading data.
-keypair_dir: Path to the keypair file.
-enable_priority_fee: Whether to enable priority fees.
-compute_unit_price: Price per compute unit.
-compute_unit_limit: Limit of compute units.
-verbose_log: Enable verbose logging.
 ```
+### Configuration Options
+- rpc: RPC endpoints for the Solana cluster.
+- txns_per_run: Number of transactions per run.
+- txn_delay: Delay between transactions in seconds.
+- runs: Number of runs to execute.
+- rpc_for_read: RPC endpoint used for reading data.
+- keypair_dir: Path to the keypair file.
+- enable_priority_fee: Whether to enable priority fees.
+- compute_unit_price: Price per compute unit.
+- compute_unit_limit: Limit of compute units.
+- verbose_log: Enable verbose logging.
