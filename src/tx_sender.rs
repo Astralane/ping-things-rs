@@ -98,7 +98,7 @@ impl RpcTxSender {
             .send_transaction_with_config(
                 &transaction,
                 RpcSendTransactionConfig {
-                    skip_preflight: false,
+                    skip_preflight: true,
                     preflight_commitment: None,
                     encoding: Some(UiTransactionEncoding::Base64),
                     max_retries: None,
