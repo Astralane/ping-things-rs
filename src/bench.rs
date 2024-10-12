@@ -1,7 +1,6 @@
 use crate::config::{convert_to_ws, PingThingsArgs};
 use crate::tx_sender::{RpcTxSender, TxMetrics};
 use futures::StreamExt;
-use serde::Serialize;
 use solana_client::nonblocking::pubsub_client::PubsubClient;
 use solana_rpc_client_api::config::RpcSignatureSubscribeConfig;
 use solana_sdk::commitment_config::CommitmentConfig;
@@ -77,7 +76,7 @@ impl Bench {
                 //delete old files
                 std::fs::remove_file(&file_name).ok();
                 let file = std::fs::File::create(file_name).expect("cannot create file");
-                let mut writer = csv::Writer::from_writer(file);
+                let writer = csv::Writer::from_writer(file);
                 (rpc_name.clone(), writer)
             })
             .collect::<HashMap<_, _>>();

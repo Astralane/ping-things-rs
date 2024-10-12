@@ -31,3 +31,7 @@ impl PingThingsArgs {
 pub fn convert_to_ws(url: String) -> String {
     url.replace("http", "ws")
 }
+
+pub fn convert_to_http(url: String) -> String {
+    url.replace("ws", "http")
+}

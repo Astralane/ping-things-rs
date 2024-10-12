@@ -1,4 +1,4 @@
-use crate::config::convert_to_ws;
+use crate::config::{convert_to_http, convert_to_ws};
 use futures::StreamExt;
 use solana_client::nonblocking::pubsub_client::PubsubClient;
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -9,6 +9,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
+use tracing::info;
 
 pub struct ChainListener {
     pub current_slot: Arc<AtomicU64>,
@@ -39,35 +40,33 @@ impl ChainListener {
         cancel: CancellationToken,
     ) {
         let http_client = Arc::new(RpcClient::new_with_commitment(
-            url.clone(),
+            convert_to_http(url.clone()),
             CommitmentConfig::finalized(),
         ));
-        let ws_client = Arc::new(
-            PubsubClient::new(&convert_to_ws(url))
-                .await
-                .expect("Failed to connect to websocket"),
-        );
+        let ws_client = PubsubClient::new(&convert_to_ws(url))
+            .await
+            .expect("Failed to connect to websocket");
         let slot_hdl = tokio::spawn(Self::listen_to_slot_updates(
             current_slot.clone(),
-            ws_client.clone(),
+            ws_client,
             cancel.clone(),
         ));
         Self::listen_to_blockhash_updates(recent_blockhash.clone(), http_client.clone(), cancel)
             .await;
         let _ = slot_hdl.await;
+        info!("exit chain listener")
     }
 
     async fn listen_to_slot_updates(
         current_slot: Arc<AtomicU64>,
-        ws_client: Arc<PubsubClient>,
+        ws_client: PubsubClient,
         cancel: CancellationToken,
     ) {
         let subscription = ws_client.slot_updates_subscribe().await.unwrap();
         let (mut stream, unsub) = subscription;
         while let Some(slot) = tokio::select! {
             _ = cancel.cancelled() => {
-                unsub().await;  // Clean up by unsubscribing
-                return;
+                None
             }
             slot = stream.next() => slot,
         } {
@@ -78,7 +77,9 @@ impl ChainListener {
                 current_slot.store(slot + 1, Ordering::Relaxed);
             }
         }
+        drop(stream);
         unsub().await;
+        //let _ = ws_client.shutdown().await;
     }
 
     async fn listen_to_blockhash_updates(

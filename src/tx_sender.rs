@@ -2,15 +2,15 @@ use anyhow::Context;
 use rand::Rng;
 use serde::Serialize;
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
 use solana_sdk::message::Message;
 use solana_sdk::signature::{Keypair, Signature, Signer};
 use solana_sdk::system_instruction;
 use solana_sdk::transaction::Transaction;
-use std::sync::Arc;
-use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_transaction_status::UiTransactionEncoding;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct RpcTxSender {
@@ -95,13 +95,16 @@ impl RpcTxSender {
     ) -> anyhow::Result<Signature> {
         let transaction = self.build_transaction_with_config(index, recent_blockhash);
         self.http_rpc
-            .send_transaction_with_config(&transaction, RpcSendTransactionConfig{
-                skip_preflight: false,
-                preflight_commitment: None,
-                encoding: Some(UiTransactionEncoding::Base64),
-                max_retries: None,
-                min_context_slot: None,
-            })
+            .send_transaction_with_config(
+                &transaction,
+                RpcSendTransactionConfig {
+                    skip_preflight: false,
+                    preflight_commitment: None,
+                    encoding: Some(UiTransactionEncoding::Base64),
+                    max_retries: None,
+                    min_context_slot: None,
+                },
+            )
             .await
             .context(format!("Failed to send transaction for {}", self.name))
     }
