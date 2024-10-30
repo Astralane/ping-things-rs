@@ -1,4 +1,3 @@
-use crate::config::{convert_to_http, convert_to_ws};
 use futures::StreamExt;
 use solana_client::nonblocking::pubsub_client::PubsubClient;
 use solana_client::nonblocking::rpc_client::RpcClient;

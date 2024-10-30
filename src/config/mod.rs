@@ -28,11 +28,3 @@ impl PingThingsArgs {
         serde_yaml::from_str::<PingThingsArgs>(&config_yaml).expect("invalid config file")
     }
 }
-
-pub fn convert_to_ws(url: String) -> String {
-    url.replace("http", "ws")
-}
-
-pub fn convert_to_http(url: String) -> String {
-    url.replace("ws", "http")
-}

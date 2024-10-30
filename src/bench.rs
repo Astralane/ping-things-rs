@@ -1,5 +1,5 @@
-use crate::config::{convert_to_ws, PingThingsArgs};
-use crate::tx_sender::{RpcTxSender, TxMetrics};
+use crate::config::PingThingsArgs;
+use crate::tx_sender::{RpcTxSender, TxMetrics, TxSender};
 use futures::StreamExt;
 use solana_client::nonblocking::pubsub_client::PubsubClient;
 use solana_rpc_client_api::config::RpcSignatureSubscribeConfig;
@@ -102,7 +102,7 @@ impl Bench {
 
     pub async fn send_and_confirm_transaction(
         tx_index: u32,
-        rpc_sender: RpcTxSender,
+        rpc_sender: Box<dyn TxSender>,
         recent_blockhash: Hash,
         slot_sent: u64,
         tx_save_sender: tokio::sync::mpsc::Sender<TxMetrics>,
@@ -128,7 +128,7 @@ impl Bench {
                 {
                     // timeout 60 seconds
                     let timeout_result =
-                        tokio::time::timeout(tokio::time::Duration::from_secs(10), stream.next())
+                        tokio::time::timeout(tokio::time::Duration::from_secs(60), stream.next())
                             .await;
                     if let Ok(Some(s)) = timeout_result {
                         tx_save_sender
@@ -186,7 +186,7 @@ impl Bench {
         let mut tx_handles = Vec::new();
         info!(
             "connecting to ws rpc {:?}",
-            convert_to_ws(config.ws_rpc.clone())
+            config.ws_rpc.clone()
         );
         let read_rpc_ws = Arc::new(
             PubsubClient::new(&config.ws_rpc)
@@ -223,7 +223,7 @@ impl Bench {
                         let index = (i - 1) * config.txns_per_run + j;
                         Self::send_and_confirm_transaction(
                             index,
-                            rpc_sender,
+                            Box::new(rpc_sender),
                             recent_blockhash,
                             slot_sent,
                             tx_save_sender,

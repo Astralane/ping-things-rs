@@ -1,4 +1,5 @@
 use anyhow::Context;
+use async_trait::async_trait;
 use rand::Rng;
 use serde::Serialize;
 use solana_client::nonblocking::rpc_client::RpcClient;
@@ -38,6 +39,16 @@ pub struct TxMetrics {
     pub slot_latency: Option<u64>,
     pub elapsed: Option<u64>, // in milliseconds
 }
+
+#[async_trait]
+pub trait TxSender: Sync + Send {
+    async fn send_transaction(
+        &self,
+        index: u32,
+        recent_blockhash: Hash,
+    ) -> anyhow::Result<Signature>;
+}
+
 impl RpcTxSender {
     pub fn new(
         name: String,
@@ -87,8 +98,11 @@ impl RpcTxSender {
         // Create transaction
         Transaction::new(&[&self.tx_config.keypair], message, recent_blockhash)
     }
+}
 
-    pub async fn send_transaction(
+#[async_trait]
+impl TxSender for RpcTxSender {
+    async fn send_transaction(
         &self,
         index: u32,
         recent_blockhash: Hash,
