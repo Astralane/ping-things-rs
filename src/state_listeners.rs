@@ -18,12 +18,13 @@ pub struct ChainListener {
 }
 
 impl ChainListener {
-    pub fn new(url: String, cancellation_token: CancellationToken) -> Self {
+    pub fn new(url: String, ws_rpc: String, cancellation_token: CancellationToken) -> Self {
         let current_slot = Arc::new(AtomicU64::from(0u64));
         let recent_blockhash = Arc::new(RwLock::new(None));
         Self {
             hdl: tokio::spawn(Self::listen_to_updates(
                 url.clone(),
+                ws_rpc,
                 current_slot.clone(),
                 recent_blockhash.clone(),
                 cancellation_token.clone(),
@@ -35,15 +36,16 @@ impl ChainListener {
 
     pub async fn listen_to_updates(
         url: String,
+        ws_rpc: String,
         current_slot: Arc<AtomicU64>,
         recent_blockhash: Arc<RwLock<Option<Hash>>>,
         cancel: CancellationToken,
     ) {
         let http_client = Arc::new(RpcClient::new_with_commitment(
-            convert_to_http(url.clone()),
+            url,
             CommitmentConfig::finalized(),
         ));
-        let ws_client = PubsubClient::new(&convert_to_ws(url))
+        let ws_client = PubsubClient::new(&ws_rpc)
             .await
             .expect("Failed to connect to websocket");
         let slot_hdl = tokio::spawn(Self::listen_to_slot_updates(

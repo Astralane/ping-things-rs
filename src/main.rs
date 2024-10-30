@@ -38,8 +38,11 @@ async fn main() {
         }
     });
 
-    let chain_listener =
-        ChainListener::new(config.rpc_for_read.clone(), cancellation_token.clone());
+    let chain_listener = ChainListener::new(
+        config.http_rpc.clone(),
+        config.ws_rpc.clone(),
+        cancellation_token.clone(),
+    );
     let bench = Bench::new(config, cancellation_token.clone());
     bench
         .start(

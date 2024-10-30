@@ -185,11 +185,11 @@ impl Bench {
         let config = self.config;
         let mut tx_handles = Vec::new();
         info!(
-            "connecting to read rpc {:?}",
-            convert_to_ws(config.rpc_for_read.clone())
+            "connecting to ws rpc {:?}",
+            convert_to_ws(config.ws_rpc.clone())
         );
         let read_rpc_ws = Arc::new(
-            PubsubClient::new(&convert_to_ws(config.rpc_for_read))
+            PubsubClient::new(&config.ws_rpc)
                 .await
                 .expect("cannot connect to websocket rpc"),
         );
