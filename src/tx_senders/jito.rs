@@ -5,10 +5,9 @@ use anyhow::Context;
 use async_trait::async_trait;
 use reqwest::Client;
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{json, Value};
 use solana_sdk::hash::Hash;
 use solana_sdk::transaction::Transaction;
-use std::str::FromStr;
 
 pub struct JitoTxSender {
     url: String,
@@ -32,10 +31,25 @@ impl JitoTxSender {
     }
 }
 
+//dont warn about unused
+#[allow(dead_code,non_snake_case)]
 #[derive(Deserialize)]
-struct JitoResponse {
+pub struct JitoBundleStatusResponseInner {
+    pub slot: u64,
+    pub bundle_id: String,
+    pub transactions: Vec<String>,
+    pub confirmationStatus: String,
+    pub err: Value,
+}
+#[derive(Deserialize)]
+pub struct JitoBundleStatusResponse {
+    pub result: JitoBundleStatusResponseInner,
+}
+
+#[derive(Deserialize)]
+pub struct JitoResponse {
     //bundle id is response
-    result: String,
+    pub result: String,
 }
 
 #[async_trait]

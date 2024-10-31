@@ -1,5 +1,6 @@
 use crate::config::PingThingsArgs;
 use crate::tx_senders::constants::JITO_RPC_URL;
+use crate::tx_senders::jito::{JitoBundleStatusResponse};
 use crate::tx_senders::solana_rpc::TxMetrics;
 use crate::tx_senders::transaction::TransactionConfig;
 use crate::tx_senders::{create_tx_sender, TxResult, TxSender};
@@ -15,7 +16,9 @@ use solana_sdk::signature::Signature;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
+use std::time::Duration;
 use tokio::sync::mpsc;
+use tokio::time::timeout;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
@@ -180,17 +183,35 @@ impl Bench {
             "method": "getBundleStatus",
             "params": vec![bundle_id.clone()]
         });
-        let response_result = client.post(JITO_RPC_URL).json(&request).send().await;
-        if let Err(e) = response_result {
-            return Err(anyhow::anyhow!(
-                "error in confirming bundle {:?} {:?}",
-                bundle_id,
-                e
-            ));
-        }
-        let response = response_result?;
-        let body = response.text().await;
-        Ok(0)
+        let confirm_with_retry = async move {
+            let mut max_retries = 10;
+            while max_retries > 0 {
+                match client.post(JITO_RPC_URL).json(&request).send().await {
+                    Ok(response) => {
+                        let body = response.text().await?;
+                        let parsed_resp = serde_json::from_str::<JitoBundleStatusResponse>(&body);
+                        match parsed_resp {
+                            Ok(resp) => {
+                                return Ok(resp.result.slot);
+                            }
+                            Err(e) => {
+                                error!("failed to parse response {:?}", e);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        error!("failed to confirm bundle {:?}", e);
+                    }
+                }
+                tokio::time::sleep(Duration::from_secs(5)).await;
+                max_retries -= 1;
+            }
+            Err(anyhow!("failed to confirm bundle {:?}", bundle_id))
+        };
+
+        let timeout_result = timeout(Duration::from_secs(60), confirm_with_retry).await;
+        let result = timeout_result??;
+        Ok(result)
     }
 
     pub async fn start(self, curr_slot: Arc<AtomicU64>, blk_hash: Arc<RwLock<Option<Hash>>>) {
