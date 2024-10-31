@@ -128,7 +128,7 @@ impl Bench {
                 {
                     // timeout 60 seconds
                     let timeout_result =
-                        tokio::time::timeout(tokio::time::Duration::from_secs(10), stream.next())
+                        tokio::time::timeout(tokio::time::Duration::from_secs(60), stream.next())
                             .await;
                     if let Ok(Some(s)) = timeout_result {
                         tx_save_sender
