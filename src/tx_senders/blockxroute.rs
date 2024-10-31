@@ -1,14 +1,14 @@
 use crate::config::RpcType;
 use crate::tx_senders::transaction::{build_transaction_with_config, TransactionConfig};
+use crate::tx_senders::TxSender;
 use anyhow::Context;
 use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::json;
 use solana_sdk::hash::Hash;
-use solana_sdk::signature::{Signature};
+use solana_sdk::signature::Signature;
 use solana_sdk::transaction::Transaction;
 use std::str::FromStr;
-use crate::tx_senders::TxSender;
 
 pub struct BlockXRouteTxSender {
     url: String,

@@ -1,6 +1,5 @@
 use crate::config::PingThingsArgs;
-use crate::tx_senders::blockxroute::BlockXRouteTxSender;
-use crate::tx_senders::solana_rpc::{SolanaRpcTxSender, TxMetrics};
+use crate::tx_senders::solana_rpc::TxMetrics;
 use crate::tx_senders::transaction::TransactionConfig;
 use crate::tx_senders::{create_tx_sender, TxSender};
 use futures::StreamExt;
@@ -8,7 +7,6 @@ use solana_client::nonblocking::pubsub_client::PubsubClient;
 use solana_rpc_client_api::config::RpcSignatureSubscribeConfig;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::hash::Hash;
-use solana_sdk::signature::Keypair;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
@@ -232,5 +230,10 @@ impl Bench {
             hdl.await.unwrap();
         }
         info!("bench complete!")
+    }
+
+    pub async fn shutdown(self) {
+        self.cancel.cancel();
+        let _ = self.hdl.await;
     }
 }

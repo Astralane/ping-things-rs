@@ -7,7 +7,7 @@ use serde::Serialize;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::hash::Hash;
-use solana_sdk::signature::{Signature};
+use solana_sdk::signature::Signature;
 use solana_transaction_status::UiTransactionEncoding;
 use std::sync::Arc;
 

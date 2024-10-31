@@ -2,10 +2,8 @@ use crate::config::{RpcConfig, RpcType};
 use crate::tx_senders::solana_rpc::SolanaRpcTxSender;
 use crate::tx_senders::transaction::TransactionConfig;
 use async_trait::async_trait;
-use rand::Rng;
 use solana_sdk::hash::Hash;
-use solana_sdk::signature::{Keypair, Signature, Signer};
-use std::str::FromStr;
+use solana_sdk::signature::Signature;
 use std::sync::Arc;
 
 pub mod blockxroute;
