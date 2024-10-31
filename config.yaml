@@ -4,7 +4,7 @@ rpc :
       auth: "<Auth>"
       rpc_type: "blockxroute" #solanarpc, jito
   "helius":
-      url: "https://staked.helius-rpc.com?api-key=f7a83dd5-197e-46f9-87e0-e59497b17b22"
+      url: "https://staked.helius-rpc.com?api-key=<Auth>"
 #       url: "http://127.0.0.1:7000"
 #       url: "http://127.0.0.1:1212"
 #       url: "http://rpc:4040"
