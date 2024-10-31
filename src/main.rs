@@ -21,7 +21,6 @@ async fn main() {
     )
     .unwrap();
     let config = PingThingsArgs::new();
-
     info!("starting with config {:?}", config);
 
     let cancellation_token = CancellationToken::new();

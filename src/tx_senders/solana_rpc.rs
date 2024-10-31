@@ -1,13 +1,12 @@
 use crate::config::RpcType;
 use crate::tx_senders::transaction::{build_transaction_with_config, TransactionConfig};
-use crate::tx_senders::TxSender;
+use crate::tx_senders::{TxResult, TxSender};
 use anyhow::Context;
 use async_trait::async_trait;
 use serde::Serialize;
 use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::hash::Hash;
-use solana_sdk::signature::Signature;
 use solana_transaction_status::UiTransactionEncoding;
 use std::sync::Arc;
 
@@ -51,14 +50,15 @@ impl TxSender for SolanaRpcTxSender {
         &self,
         index: u32,
         recent_blockhash: Hash,
-    ) -> anyhow::Result<Signature> {
+    ) -> anyhow::Result<TxResult> {
         let transaction = build_transaction_with_config(
             &self.tx_config,
             RpcType::SolanaRpc,
             index,
             recent_blockhash,
         );
-        self.http_rpc
+        let sig = self
+            .http_rpc
             .send_transaction_with_config(
                 &transaction,
                 RpcSendTransactionConfig {
@@ -70,6 +70,7 @@ impl TxSender for SolanaRpcTxSender {
                 },
             )
             .await
-            .context(format!("Failed to send transaction for {}", self.name))
+            .context(format!("Failed to send transaction for {}", self.name))?;
+        Ok(TxResult::Signature(sig))
     }
 }

@@ -7,52 +7,39 @@ use reqwest::Client;
 use serde::Deserialize;
 use serde_json::json;
 use solana_sdk::hash::Hash;
-use solana_sdk::signature::Signature;
 use solana_sdk::transaction::Transaction;
 use std::str::FromStr;
 
-pub struct BlockXRouteTxSender {
+pub struct JitoTxSender {
     url: String,
     name: String,
-    auth: String,
     client: Client,
     tx_config: TransactionConfig,
 }
 
-impl BlockXRouteTxSender {
-    pub fn new(
-        name: String,
-        url: String,
-        auth: String,
-        tx_config: TransactionConfig,
-        client: Client,
-    ) -> Self {
+impl JitoTxSender {
+    pub fn new(name: String, url: String, tx_config: TransactionConfig, client: Client) -> Self {
         Self {
             url,
             name,
-            auth,
-            client,
             tx_config,
+            client,
         }
     }
 
     pub fn build_transaction_with_config(&self, index: u32, recent_blockhash: Hash) -> Transaction {
-        build_transaction_with_config(
-            &self.tx_config,
-            RpcType::BlockXRoute,
-            index,
-            recent_blockhash,
-        )
+        build_transaction_with_config(&self.tx_config, RpcType::Jito, index, recent_blockhash)
     }
 }
 
 #[derive(Deserialize)]
-struct BlockxRouteResponse {
-    signature: String,
+struct JitoResponse {
+    //bundle id is response
+    result: String,
 }
 
 #[async_trait]
-impl TxSender for BlockXRouteTxSender {
+impl TxSender for JitoTxSender {
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -64,28 +51,21 @@ impl TxSender for BlockXRouteTxSender {
     ) -> anyhow::Result<TxResult> {
         let tx = self.build_transaction_with_config(index, recent_blockhash);
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
-        let tx_str = base64::encode(tx_bytes);
+        let encoded_transaction = base64::encode(tx_bytes);
         let body = json!({
-            "transaction": {
-                "content": tx_str,
-            },
-            "useStakedRPCs": true,
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "sendBundle",
+            "params": vec![encoded_transaction]
         });
-        let response = self
-            .client
-            .post(&self.url)
-            .header("Authorization", self.auth.clone())
-            .json(&body)
-            .send()
-            .await?;
+        let response = self.client.post(&self.url).json(&body).send().await?;
         let status = response.status();
         let body = response.text().await?;
         if !status.is_success() {
             return Err(anyhow::anyhow!("failed to send tx: {}", body));
         }
-        let parsed_resp = serde_json::from_str::<BlockxRouteResponse>(&body)
-            .context("cannot deserialize signature")?;
-        let sig = Signature::from_str(&parsed_resp.signature).context("cannot parse signature")?;
-        Ok(TxResult::Signature(sig))
+        let parsed_resp =
+            serde_json::from_str::<JitoResponse>(&body).context("cannot deserialize signature")?;
+        Ok(TxResult::BundleID(parsed_resp.result))
     }
 }
