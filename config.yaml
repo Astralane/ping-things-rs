@@ -1,13 +1,22 @@
 rpc :
-  "solana-public" :
-      url: "https://api.mainnet-beta.solana.com"
+  "blockxroute":
+      url: "https://uk.solana.dex.blxrbdn.com/api/v2/submit"
+      auth: "<Auth>"
+      rpc_type: "blockxroute" #solanarpc, jito
+  "helius":
+      url: "https://staked.helius-rpc.com?api-key=f7a83dd5-197e-46f9-87e0-e59497b17b22"
+#       url: "http://127.0.0.1:7000"
+#       url: "http://127.0.0.1:1212"
+#       url: "http://rpc:4040"
 
-txns_per_run: 2
-txn_delay: 2
-runs: 2
-rpc_for_read: "https://api.mainnet-beta.solana.com"
-keypair_dir: "/Users/<user>/.config/solana/id.json"
+txns_per_run: 1
+txn_delay: 5
+runs: 5
+http_rpc: "https://staked.helius-rpc.com?api-key=<Auth>"
+ws_rpc: "wss://staked.helius-rpc.com?api-key=<Auth>"
+keypair_dir: "/Users/<User>/.config/solana/id.json"
 enable_priority_fee: true
-compute_unit_price: 0
-compute_unit_limit: 450
+compute_unit_price: 1000000 #microlamports
+compute_unit_limit: 10000
+tip: 1000000 #lamports
 verbose_log: false

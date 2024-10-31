@@ -1,12 +1,14 @@
 use crate::config::PingThingsArgs;
-use crate::tx_sender::{RpcTxSender, TxMetrics, TxSender};
+use crate::tx_senders::blockxroute::BlockXRouteTxSender;
+use crate::tx_senders::solana_rpc::{SolanaRpcTxSender, TxMetrics};
+use crate::tx_senders::transaction::TransactionConfig;
+use crate::tx_senders::{create_tx_sender, TxSender};
 use futures::StreamExt;
 use solana_client::nonblocking::pubsub_client::PubsubClient;
 use solana_rpc_client_api::config::RpcSignatureSubscribeConfig;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::hash::Hash;
 use solana_sdk::signature::Keypair;
-use solana_sdk::signer::EncodableKey;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
@@ -17,36 +19,22 @@ pub struct Bench {
     config: PingThingsArgs,
     tx_subscribe_sender: tokio::sync::mpsc::Sender<TxMetrics>,
     cancel: CancellationToken,
-    rpcs: Vec<RpcTxSender>,
+    rpcs: Vec<Arc<dyn TxSender>>,
     hdl: tokio::task::JoinHandle<()>,
 }
 
 impl Bench {
     pub fn new(config: PingThingsArgs, cancellation_token: CancellationToken) -> Self {
         let (tx_subscribe_sender, tx_subscribe_receiver) = tokio::sync::mpsc::channel(100);
-
+        let tx_config: TransactionConfig = config.clone().into();
         let rpcs = config
             .rpc
             .clone()
             .into_iter()
-            .map(|(name, rpc)| {
-                let keyring = Keypair::read_from_file(config.keypair_dir.clone())
-                    .expect("cannot read keypair");
-                RpcTxSender::new(
-                    name,
-                    rpc.url,
-                    keyring,
-                    config.compute_unit_limit,
-                    config.compute_unit_price,
-                    config.enable_priority_fee,
-                )
-            })
-            .collect::<Vec<RpcTxSender>>();
+            .map(|(name, rpc)| create_tx_sender(name, rpc, tx_config.clone()))
+            .collect::<Vec<Arc<dyn TxSender>>>();
 
-        let rpc_names = rpcs
-            .iter()
-            .map(|rpc| rpc.name.clone())
-            .collect::<Vec<String>>();
+        let rpc_names = rpcs.iter().map(|rpc| rpc.name()).collect::<Vec<String>>();
 
         let recv_loop_handle = tokio::spawn(Bench::transaction_save_loop(
             tx_subscribe_receiver,
@@ -102,7 +90,7 @@ impl Bench {
 
     pub async fn send_and_confirm_transaction(
         tx_index: u32,
-        rpc_sender: Box<dyn TxSender>,
+        rpc_sender: Arc<dyn TxSender>,
         recent_blockhash: Hash,
         slot_sent: u64,
         tx_save_sender: tokio::sync::mpsc::Sender<TxMetrics>,
@@ -184,10 +172,7 @@ impl Bench {
         info!("starting bench");
         let config = self.config;
         let mut tx_handles = Vec::new();
-        info!(
-            "connecting to ws rpc {:?}",
-            config.ws_rpc.clone()
-        );
+        info!("connecting to ws rpc {:?}", config.ws_rpc.clone());
         let read_rpc_ws = Arc::new(
             PubsubClient::new(&config.ws_rpc)
                 .await
@@ -215,7 +200,7 @@ impl Bench {
                     };
                     let tx_save_sender = self.tx_subscribe_sender.clone();
                     let slot_sent = curr_slot.load(Ordering::Relaxed);
-                    let rpc_name = rpc.name.clone();
+                    let rpc_name = rpc.name();
                     let read_rpc_ws = read_rpc_ws.clone();
                     let rpc_sender = rpc.clone();
                     let hdl = tokio::spawn(async move {
@@ -223,7 +208,7 @@ impl Bench {
                         let index = (i - 1) * config.txns_per_run + j;
                         Self::send_and_confirm_transaction(
                             index,
-                            Box::new(rpc_sender),
+                            rpc_sender,
                             recent_blockhash,
                             slot_sent,
                             tx_save_sender,

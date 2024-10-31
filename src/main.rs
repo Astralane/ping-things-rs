@@ -1,3 +1,5 @@
+extern crate core;
+
 use crate::bench::Bench;
 use crate::config::PingThingsArgs;
 use crate::state_listeners::ChainListener;
@@ -8,7 +10,7 @@ use tracing::info;
 mod bench;
 mod config;
 mod state_listeners;
-mod tx_sender;
+mod tx_senders;
 
 #[tokio::main]
 async fn main() {
