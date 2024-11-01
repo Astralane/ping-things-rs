@@ -6,8 +6,11 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
+use solana_sdk::bs58;
 use solana_sdk::hash::Hash;
 use solana_sdk::transaction::Transaction;
+use tracing::debug;
+use tracing::field::debug;
 
 pub struct JitoTxSender {
     url: String,
@@ -31,15 +34,24 @@ impl JitoTxSender {
     }
 }
 
-//dont warn about unused
-#[allow(dead_code,non_snake_case)]
 #[derive(Deserialize)]
-pub struct JitoBundleStatusResponseInner {
+pub struct JitoBundleStatusResponseInnerContext {
+    pub slot: u64,
+}
+
+#[derive(Deserialize)]
+pub struct JitoBundleStatusResponseInnerValue {
     pub slot: u64,
     pub bundle_id: String,
     pub transactions: Vec<String>,
-    pub confirmationStatus: String,
+    pub confirmation_status: String,
     pub err: Value,
+}
+
+#[derive(Deserialize)]
+pub struct JitoBundleStatusResponseInner {
+    pub context: JitoBundleStatusResponseInnerContext,
+    pub value: Vec<JitoBundleStatusResponseInnerValue>,
 }
 #[derive(Deserialize)]
 pub struct JitoBundleStatusResponse {
@@ -65,13 +77,14 @@ impl TxSender for JitoTxSender {
     ) -> anyhow::Result<TxResult> {
         let tx = self.build_transaction_with_config(index, recent_blockhash);
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
-        let encoded_transaction = base64::encode(tx_bytes);
+        let encoded_transaction = bs58::encode(tx_bytes).into_string();
         let body = json!({
             "jsonrpc": "2.0",
             "id": 1,
             "method": "sendBundle",
-            "params": vec![encoded_transaction]
+            "params": [[encoded_transaction]]
         });
+        debug!("sending tx: {}", body.to_string());
         let response = self.client.post(&self.url).json(&body).send().await?;
         let status = response.status();
         let body = response.text().await?;

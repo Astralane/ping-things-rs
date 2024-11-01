@@ -1,11 +1,12 @@
 use crate::config::PingThingsArgs;
 use crate::tx_senders::constants::JITO_RPC_URL;
-use crate::tx_senders::jito::{JitoBundleStatusResponse};
+use crate::tx_senders::jito::JitoBundleStatusResponse;
 use crate::tx_senders::solana_rpc::TxMetrics;
 use crate::tx_senders::transaction::TransactionConfig;
 use crate::tx_senders::{create_tx_sender, TxResult, TxSender};
 use anyhow::anyhow;
 use futures::StreamExt;
+use log::debug;
 use reqwest::Client;
 use serde_json::json;
 use solana_client::nonblocking::pubsub_client::PubsubClient;
@@ -180,22 +181,31 @@ impl Bench {
         let request = json!({
             "jsonrpc": "2.0",
             "id": 1,
-            "method": "getBundleStatus",
-            "params": vec![bundle_id.clone()]
+            "method": "getBundleStatuses",
+            "params": [[bundle_id.clone()]]
         });
         let confirm_with_retry = async move {
             let mut max_retries = 10;
             while max_retries > 0 {
                 match client.post(JITO_RPC_URL).json(&request).send().await {
                     Ok(response) => {
+                        let status = response.status();
                         let body = response.text().await?;
                         let parsed_resp = serde_json::from_str::<JitoBundleStatusResponse>(&body);
-                        match parsed_resp {
-                            Ok(resp) => {
-                                return Ok(resp.result.slot);
+                        match (parsed_resp, status.is_success()) {
+                            (Ok(bundle_responses), true) => {
+                                if bundle_responses.result.value.is_empty() {
+                                    debug!("empty bundle response: {}", body);
+                                    continue;
+                                }
+                                let slot = bundle_responses.result.value[0].slot;
+                                return Ok(slot);
                             }
-                            Err(e) => {
-                                error!("failed to parse response {:?}", e);
+                            (_, false) => {
+                                debug!("failed to confirm bundle: {}", body);
+                            }
+                            (Err(e), _) => {
+                                debug!("failed to parse confirm bundle response {:?}", e);
                             }
                         }
                     }
@@ -274,7 +284,7 @@ impl Bench {
                         )
                         .await
                         {
-                            error!("error in confirming {:?}", e);
+                            error!("error end_and_confirm_transaction {:?}", e);
                         }
                     });
                     tx_handles.push(hdl);
@@ -283,7 +293,7 @@ impl Bench {
             //run delay if not last loop
             if i != config.runs {
                 info!("taking a breather...");
-                tokio::time::sleep(tokio::time::Duration::from_secs(config.txn_delay as u64)).await;
+                tokio::time::sleep(Duration::from_secs(config.txn_delay as u64)).await;
             }
         }
         info!("waiting for transactions to complete...");
