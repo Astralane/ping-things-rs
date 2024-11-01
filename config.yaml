@@ -8,7 +8,7 @@ rpc :
       auth: "<Auth>"
       rpc_type: "blockxroute"
   "jito":
-    url: "https://frankfurt.mainnet.block-engine.jito.wtf"
+    url: "https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/bundles"
     rpc_type: "jito"
 
 txns_per_run: 1
