@@ -16,7 +16,7 @@ cd ping-things-rs
 
 ### Build the project:
 ```
-cargo build --release
+RUST_LOG=info cargo build --release
 ```
 ### Run the benchmark:
 ```
