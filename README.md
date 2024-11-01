@@ -35,12 +35,13 @@ rpc :
 txns_per_run: 2
 txn_delay: 2
 runs: 2
-rpc_for_read: "https://api.mainnet-beta.solana.com"
+http_rpc: "http://api.mainnet-beta.solana.com"
+ws_rpc: "wss://api.mainnet-beta.solana.com"
 keypair_dir: "/Users/<user>/.config/solana/id.json"
-enable_priority_fee: true
 compute_unit_price: 0
 compute_unit_limit: 450
 verbose_log: false
+tip: 1000000
 ```
 ### Configuration Options
 - rpc: RPC endpoints for the Solana cluster.
