@@ -1,3 +1,5 @@
+extern crate core;
+
 use crate::bench::Bench;
 use crate::config::PingThingsArgs;
 use crate::state_listeners::ChainListener;
@@ -8,7 +10,7 @@ use tracing::info;
 mod bench;
 mod config;
 mod state_listeners;
-mod tx_sender;
+mod tx_senders;
 
 #[tokio::main]
 async fn main() {
@@ -19,7 +21,6 @@ async fn main() {
     )
     .unwrap();
     let config = PingThingsArgs::new();
-
     info!("starting with config {:?}", config);
 
     let cancellation_token = CancellationToken::new();
