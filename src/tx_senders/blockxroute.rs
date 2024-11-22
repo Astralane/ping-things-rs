@@ -39,7 +39,7 @@ impl BlockXRouteTxSender {
     pub fn build_transaction_with_config(&self, index: u32, recent_blockhash: Hash) -> Transaction {
         build_transaction_with_config(
             &self.tx_config,
-            RpcType::BlockXRoute,
+            &RpcType::BlockXRoute,
             index,
             recent_blockhash,
         )

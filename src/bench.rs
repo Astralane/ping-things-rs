@@ -28,7 +28,6 @@ pub struct Bench {
     tx_subscribe_sender: tokio::sync::mpsc::Sender<TxMetrics>,
     cancel: CancellationToken,
     rpcs: Vec<Arc<dyn TxSender>>,
-    hdl: tokio::task::JoinHandle<()>,
     client: Client,
 }
 
@@ -46,7 +45,7 @@ impl Bench {
 
         let rpc_names = rpcs.iter().map(|rpc| rpc.name()).collect::<Vec<String>>();
 
-        let recv_loop_handle = tokio::spawn(Bench::transaction_save_loop(
+        let _recv_loop_handle = tokio::spawn(Bench::transaction_save_loop(
             tx_subscribe_receiver,
             cancellation_token.clone(),
             rpc_names,
@@ -57,7 +56,6 @@ impl Bench {
             tx_subscribe_sender,
             rpcs,
             cancel: cancellation_token,
-            hdl: recv_loop_handle,
             client,
         }
     }
@@ -306,6 +304,5 @@ impl Bench {
 
     pub async fn shutdown(self) {
         self.cancel.cancel();
-        let _ = self.hdl.await;
     }
 }

@@ -1,7 +1,5 @@
 use crate::config::{PingThingsArgs, RpcType};
-use crate::tx_senders::constants::{
-    BX_MEMO_MARKER_MSG, JITO_TIP_WALLET, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET,
-};
+use crate::tx_senders::constants::{BX_MEMO_MARKER_MSG, JITO_TIP_WALLET, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET};
 use rand::Rng;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
@@ -43,7 +41,7 @@ fn create_trader_api_memo_instruction() -> Instruction {
 }
 pub fn build_transaction_with_config(
     tx_config: &TransactionConfig,
-    rpc_type: RpcType,
+    rpc_type: &RpcType,
     index: u32,
     recent_blockhash: Hash,
 ) -> Transaction {
@@ -83,6 +81,14 @@ pub fn build_transaction_with_config(
                 system_instruction::transfer(
                     &tx_config.keypair.pubkey(),
                     &tx_config.keypair.pubkey(),
+                    tx_config.tip,
+                )
+            }
+            RpcType::Temporal => {
+                // add an extra transfer to self
+                system_instruction::transfer(
+                    &tx_config.keypair.pubkey(),
+                    &Pubkey::from_str(NOZOMI_TIP).unwrap(),
                     tx_config.tip,
                 )
             }

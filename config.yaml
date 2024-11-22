@@ -10,14 +10,18 @@ rpc :
   "jito":
     url: "https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/bundles"
     rpc_type: "jito"
+  "temporal":
+    url: "http://fra1.nozomi.temporal.xyz/?c="
+    rpc_type: "temporal"
 
-txns_per_run: 1
-txn_delay: 5
-runs: 5
+txns_per_run: 10
+txn_delay: 1
+runs: 60
 http_rpc: "https://staked.helius-rpc.com?api-key=<ApiKey>"
 ws_rpc: "wss://staked.helius-rpc.com?api-key=<ApiKey>"
-keypair_dir: "/Users/<User>/.config/solana/id.json"
-compute_unit_price: 10000 #microlamports
-compute_unit_limit: 2500
-tip: 1000000 #lamports
+keypair_dir: "/Users/nuel/.config/solana/id.json"
+enable_priority_fee: true
+compute_unit_price: 50000
+compute_unit_limit: 20000
 verbose_log: false
+tip: 1000000

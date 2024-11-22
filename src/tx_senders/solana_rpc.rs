@@ -11,10 +11,11 @@ use solana_transaction_status::UiTransactionEncoding;
 use std::sync::Arc;
 
 #[derive(Clone)]
-pub struct SolanaRpcTxSender {
+pub struct GenericRpc {
     pub name: String,
     pub http_rpc: Arc<RpcClient>,
     tx_config: TransactionConfig,
+    rpc_type: RpcType,
 }
 
 #[derive(Serialize, Debug)]
@@ -29,19 +30,20 @@ pub struct TxMetrics {
     pub elapsed: Option<u64>, // in milliseconds
 }
 
-impl SolanaRpcTxSender {
-    pub fn new(name: String, url: String, config: TransactionConfig) -> Self {
+impl GenericRpc {
+    pub fn new(name: String, url: String, config: TransactionConfig, rpc_type: RpcType) -> Self {
         let http_rpc = Arc::new(RpcClient::new(url));
-        SolanaRpcTxSender {
+        GenericRpc {
             name,
             http_rpc,
             tx_config: config,
+            rpc_type
         }
     }
 }
 
 #[async_trait]
-impl TxSender for SolanaRpcTxSender {
+impl TxSender for GenericRpc {
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -53,7 +55,7 @@ impl TxSender for SolanaRpcTxSender {
     ) -> anyhow::Result<TxResult> {
         let transaction = build_transaction_with_config(
             &self.tx_config,
-            RpcType::SolanaRpc,
+            &self.rpc_type,
             index,
             recent_blockhash,
         );

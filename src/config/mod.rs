@@ -25,6 +25,7 @@ pub enum RpcType {
     SolanaRpc,
     BlockXRoute,
     Jito,
+    Temporal
 }
 #[derive(Clone, Debug, Deserialize)]
 pub struct RpcConfig {
