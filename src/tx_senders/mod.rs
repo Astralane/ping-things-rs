@@ -1,6 +1,6 @@
 use crate::config::{RpcConfig, RpcType};
 use crate::tx_senders::jito::JitoTxSender;
-use crate::tx_senders::solana_rpc::SolanaRpcTxSender;
+use crate::tx_senders::solana_rpc::GenericRpc;
 use crate::tx_senders::transaction::TransactionConfig;
 use async_trait::async_trait;
 use reqwest::Client;
@@ -57,7 +57,11 @@ pub fn create_tx_sender(
             Arc::new(tx_sender)
         }
         RpcType::SolanaRpc => {
-            let tx_sender = SolanaRpcTxSender::new(name, rpc_config.url, tx_config);
+            let tx_sender = GenericRpc::new(name, rpc_config.url, tx_config, RpcType::SolanaRpc);
+            Arc::new(tx_sender)
+        }
+        RpcType::Temporal => {
+            let tx_sender = GenericRpc::new(name, rpc_config.url, tx_config, RpcType::Temporal);
             Arc::new(tx_sender)
         }
         RpcType::Jito => {

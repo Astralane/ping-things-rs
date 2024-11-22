@@ -10,7 +10,6 @@ use solana_sdk::bs58;
 use solana_sdk::hash::Hash;
 use solana_sdk::transaction::Transaction;
 use tracing::debug;
-use tracing::field::debug;
 
 pub struct JitoTxSender {
     url: String,
@@ -30,7 +29,7 @@ impl JitoTxSender {
     }
 
     pub fn build_transaction_with_config(&self, index: u32, recent_blockhash: Hash) -> Transaction {
-        build_transaction_with_config(&self.tx_config, RpcType::Jito, index, recent_blockhash)
+        build_transaction_with_config(&self.tx_config, &RpcType::Jito, index, recent_blockhash)
     }
 }
 
