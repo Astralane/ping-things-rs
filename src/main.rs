@@ -52,6 +52,7 @@ async fn main() {
         )
         .await;
     cancellation_token.cancel();
+    info!("waiting for chain listener to exit");
     let _ = chain_listener.hdl.await;
     info!("exiting main");
 }

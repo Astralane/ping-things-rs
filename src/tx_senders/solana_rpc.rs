@@ -37,7 +37,7 @@ impl GenericRpc {
             name,
             http_rpc,
             tx_config: config,
-            rpc_type
+            rpc_type,
         }
     }
 }
@@ -53,12 +53,8 @@ impl TxSender for GenericRpc {
         index: u32,
         recent_blockhash: Hash,
     ) -> anyhow::Result<TxResult> {
-        let transaction = build_transaction_with_config(
-            &self.tx_config,
-            &self.rpc_type,
-            index,
-            recent_blockhash,
-        );
+        let transaction =
+            build_transaction_with_config(&self.tx_config, &self.rpc_type, index, recent_blockhash);
         let sig = self
             .http_rpc
             .send_transaction_with_config(

@@ -10,16 +10,18 @@ use log::debug;
 use reqwest::Client;
 use serde_json::json;
 use solana_client::nonblocking::pubsub_client::PubsubClient;
+use solana_client::nonblocking::rpc_client::RpcClient;
 use solana_rpc_client_api::config::RpcSignatureSubscribeConfig;
 use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::hash::Hash;
 use solana_sdk::signature::Signature;
+use solana_transaction_status::UiTransactionEncoding;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::sync::mpsc;
-use tokio::time::timeout;
+use tokio::time::{sleep, timeout};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
@@ -104,7 +106,7 @@ impl Bench {
         slot_sent: u64,
         tx_save_sender: mpsc::Sender<TxMetrics>,
         rpc_name: String,
-        ws_client: Arc<PubsubClient>,
+        http_client: Arc<RpcClient>,
         client: Client,
     ) -> anyhow::Result<()> {
         let start = tokio::time::Instant::now();
@@ -112,19 +114,23 @@ impl Bench {
             .send_transaction(tx_index, recent_blockhash)
             .await?;
 
+        let now = tokio::time::Instant::now();
         let subscription_result = match tx_result.clone() {
-            TxResult::Signature(signature) => Self::confirm_transaction(signature, ws_client).await,
+            TxResult::Signature(signature) => {
+                Self::confirm_transaction(signature, http_client).await
+            }
             TxResult::BundleID(id) => Self::confirm_bundle(id, client).await,
         };
 
         if let Ok(slot_landed) = subscription_result {
+            let latency = slot_landed.saturating_sub(slot_sent);
             tx_save_sender
                 .send(TxMetrics {
                     success: true,
                     elapsed: Some(start.elapsed().as_millis() as u64),
                     slot_sent,
                     slot_landed: Some(slot_landed),
-                    slot_latency: Some(slot_landed - slot_sent),
+                    slot_latency: Some(latency),
                     rpc_name,
                     index: tx_index,
                     signature: tx_result.into(),
@@ -133,7 +139,11 @@ impl Bench {
                 .expect("cannot send to file saver loop");
         } else {
             // log error
-            warn!("no response from signature subscription {:?}", tx_result);
+            warn!(
+                "waited {:}s, no response from signature subscription {:?} ",
+                now.elapsed().as_secs(),
+                tx_result
+            );
             tx_save_sender
                 .send(TxMetrics {
                     success: false,
@@ -153,28 +163,32 @@ impl Bench {
 
     async fn confirm_transaction(
         signature: Signature,
-        client: Arc<PubsubClient>,
+        client: Arc<RpcClient>,
     ) -> anyhow::Result<u64> {
-        let (mut stream, unsub) = client
-            .signature_subscribe(
-                &signature,
-                Some(RpcSignatureSubscribeConfig {
-                    commitment: Some(CommitmentConfig::processed()),
-                    enable_received_notification: Some(false),
-                }),
-            )
-            .await?;
-        // timeout 60 seconds
-        let timeout_result =
-            tokio::time::timeout(tokio::time::Duration::from_secs(60), stream.next()).await;
-        unsub().await;
-        let resp = timeout_result?.ok_or(anyhow!(
-            "no response from signature subscription {:?}",
-            signature
-        ))?;
-        Ok(resp.context.slot)
+        let result = tokio::time::timeout(
+            Duration::from_secs(60),
+            Self::confirm_signature_with_retires(&signature, client),
+        )
+        .await?;
+        result
     }
 
+    async fn confirm_signature_with_retires(
+        signature: &Signature,
+        client: Arc<RpcClient>,
+    ) -> anyhow::Result<u64> {
+        let mut max_retries = 10;
+        while max_retries > 0 {
+            let resp = client
+                .get_transaction(signature, UiTransactionEncoding::Base64)
+                .await;
+            if let Ok(tx) = resp {
+                return Ok(tx.slot);
+            }
+            tokio::time::sleep(Duration::from_secs(2)).await;
+        }
+        Err(anyhow!("failed to confirm signature {:?}", signature))
+    }
     async fn confirm_bundle(bundle_id: String, client: Client) -> anyhow::Result<u64> {
         let request = json!({
             "jsonrpc": "2.0",
@@ -235,12 +249,11 @@ impl Bench {
         info!("starting bench");
         let config = self.config;
         let mut tx_handles = Vec::new();
-        info!("connecting to ws rpc {:?}", config.ws_rpc.clone());
-        let ws_rpc = Arc::new(
-            PubsubClient::new(&config.ws_rpc)
-                .await
-                .expect("cannot connect to websocket rpc"),
-        );
+        info!("connecting to http rpc {:?}", config.http_rpc.clone());
+        let http_rpc = Arc::new(RpcClient::new_with_commitment(
+            config.http_rpc.clone(),
+            CommitmentConfig::processed(),
+        ));
 
         //wait for blockhash to be updated
         while blk_hash.read().unwrap().is_none() {
@@ -264,9 +277,9 @@ impl Bench {
                     let tx_save_sender = self.tx_subscribe_sender.clone();
                     let slot_sent = curr_slot.load(Ordering::Relaxed);
                     let rpc_name = rpc.name();
-                    let ws_rpc = ws_rpc.clone();
                     let rpc_sender = rpc.clone();
                     let client = self.client.clone();
+                    let http_rpc = http_rpc.clone();
                     let hdl = tokio::spawn(async move {
                         //unique index based on progress of both loop
                         let index = (i - 1) * config.txns_per_run + j;
@@ -277,12 +290,12 @@ impl Bench {
                             slot_sent,
                             tx_save_sender,
                             rpc_name,
-                            ws_rpc,
+                            http_rpc,
                             client,
                         )
                         .await
                         {
-                            error!("error end_and_confirm_transaction {:?}", e);
+                            error!("error send_and_confirm_transaction {:?}", e);
                         }
                     });
                     tx_handles.push(hdl);
