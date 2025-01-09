@@ -8,3 +8,5 @@ pub const JITO_RPC_URL: &str = "https://mainnet.block-engine.jito.wtf:443/api/v1
 
 pub const NOZOMI_TIP: &str = "TEMPaMeCRFAS9EKF53Jd6KpHxgL47uWLcpFArU1Fanq";
 pub const MIN_TIP_AMOUNT: u64 = 1_000_000;
+
+pub const SLOT_ERROR_THRESHOLD: u64 = 5;
