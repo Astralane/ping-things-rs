@@ -13,6 +13,7 @@ pub mod constants;
 pub mod jito;
 pub mod solana_rpc;
 pub mod transaction;
+mod not_jito;
 
 #[derive(Debug, Clone)]
 pub enum TxResult {
@@ -57,6 +58,10 @@ pub fn create_tx_sender(
             Arc::new(tx_sender)
         }
         RpcType::SolanaRpc => {
+            let tx_sender = GenericRpc::new(name, rpc_config.url, tx_config, RpcType::SolanaRpc);
+            Arc::new(tx_sender)
+        }
+        RpcType::NotJito => {
             let tx_sender = GenericRpc::new(name, rpc_config.url, tx_config, RpcType::SolanaRpc);
             Arc::new(tx_sender)
         }

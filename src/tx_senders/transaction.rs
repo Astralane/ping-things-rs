@@ -1,7 +1,5 @@
 use crate::config::{PingThingsArgs, RpcType};
-use crate::tx_senders::constants::{
-    BX_MEMO_MARKER_MSG, JITO_TIP_WALLET, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET,
-};
+use crate::tx_senders::constants::{BX_MEMO_MARKER_MSG, JITO_TIP_WALLET, NOT_JITO_TIP_WALLET, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET};
 use rand::Rng;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
@@ -76,6 +74,11 @@ pub fn build_transaction_with_config(
             RpcType::Jito => system_instruction::transfer(
                 &tx_config.keypair.pubkey(),
                 &Pubkey::from_str(JITO_TIP_WALLET).unwrap(),
+                tx_config.tip,
+            ),
+            RpcType::NotJito => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(NOT_JITO_TIP_WALLET).unwrap(),
                 tx_config.tip,
             ),
             RpcType::SolanaRpc => {
