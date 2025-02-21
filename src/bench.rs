@@ -289,13 +289,13 @@ impl Bench {
                             recent_blockhash,
                             slot_sent,
                             tx_save_sender,
-                            rpc_name,
+                            rpc_name.clone(),
                             http_rpc,
                             client,
                         )
                         .await
                         {
-                            error!("error send_and_confirm_transaction {:?}", e);
+                            error!("rpc :: {} error send_and_confirm_transaction {:?}",rpc_name, e);
                         }
                     });
                     tx_handles.push(hdl);

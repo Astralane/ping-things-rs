@@ -4,7 +4,7 @@ pub const TRADER_API_MEMO_PROGRAM: &str = "HQ2UUt18uJqKaQFJhgV9zaTdQxUZjNrsKFgoE
 
 pub const JITO_TIP_WALLET: &str = "DfXygSm4jCyNCybVYYK6DwvWqjKee8pbDmJGcLWNDXjh";
 
-pub const NOT_JITO_TIP_WALLET: &str = "astra4uejePWneqNaJKuFFA8oonqCE1sqF6b45kDMZm";
+pub const ASTRALANE_TIP_WALLET: &str = "astra4uejePWneqNaJKuFFA8oonqCE1sqF6b45kDMZm";
 
 pub const JITO_RPC_URL: &str = "https://mainnet.block-engine.jito.wtf:443/api/v1/bundles";
 

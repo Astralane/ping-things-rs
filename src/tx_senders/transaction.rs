@@ -1,5 +1,5 @@
 use crate::config::{PingThingsArgs, RpcType};
-use crate::tx_senders::constants::{BX_MEMO_MARKER_MSG, JITO_TIP_WALLET, NOT_JITO_TIP_WALLET, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET};
+use crate::tx_senders::constants::{BX_MEMO_MARKER_MSG, JITO_TIP_WALLET, ASTRALANE_TIP_WALLET, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET};
 use rand::Rng;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
@@ -11,8 +11,9 @@ use solana_sdk::system_instruction;
 use solana_sdk::transaction::Transaction;
 use std::str::FromStr;
 use std::sync::Arc;
+use tracing::info;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TransactionConfig {
     pub keypair: Arc<Keypair>,
     pub compute_unit_limit: u32,
@@ -45,6 +46,7 @@ pub fn build_transaction_with_config(
     index: u32,
     recent_blockhash: Hash,
 ) -> Transaction {
+    info!("build_transaction_with_config {:?} tip {:?}", tx_config.tip, rpc_type);
     let pay = (5000 + index) as u64 + (rand::thread_rng().gen_range(1..1000 /* high */));
 
     let mut instructions = Vec::new();
@@ -76,11 +78,14 @@ pub fn build_transaction_with_config(
                 &Pubkey::from_str(JITO_TIP_WALLET).unwrap(),
                 tx_config.tip,
             ),
-            RpcType::NotJito => system_instruction::transfer(
-                &tx_config.keypair.pubkey(),
-                &Pubkey::from_str(NOT_JITO_TIP_WALLET).unwrap(),
-                tx_config.tip,
-            ),
+            RpcType::Astralane => {
+                info!("building onn jito {:?} tip {:?}", ASTRALANE_TIP_WALLET, tx_config.tip);
+                system_instruction::transfer(
+                    &tx_config.keypair.pubkey(),
+                    &Pubkey::from_str(ASTRALANE_TIP_WALLET).unwrap(),
+                    tx_config.tip,
+                )
+            }
             RpcType::SolanaRpc => {
                 // add an extra transfer to self
                 system_instruction::transfer(
