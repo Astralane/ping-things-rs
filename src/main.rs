@@ -45,10 +45,17 @@ async fn main() {
         cancellation_token.clone(),
     );
     //wait for slot update and blockhash update
-    while !cancellation_token.is_cancelled() && chain_listener.current_slot.load(core::sync::atomic::Ordering::Relaxed) == 0 {
+    while !cancellation_token.is_cancelled()
+        && chain_listener
+            .current_slot
+            .load(core::sync::atomic::Ordering::Relaxed)
+            == 0
+    {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
-    while !cancellation_token.is_cancelled() && chain_listener.recent_blockhash.read().unwrap().is_none() {
+    while !cancellation_token.is_cancelled()
+        && chain_listener.recent_blockhash.read().unwrap().is_none()
+    {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
     let bench = Bench::new(config, cancellation_token.clone());

@@ -69,7 +69,9 @@ impl TxSender for BlockXRouteTxSender {
             "transaction": {
                 "content": tx_str,
             },
-            "useStakedRPCs": true,
+            "frontRunningProtection": false,
+            "fastBestEffort": true,
+            "useStakedRPCs": true
         });
         let response = self
             .client

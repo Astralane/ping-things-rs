@@ -105,6 +105,13 @@ pub fn build_transaction_with_config(
     );
     instructions.push(self_transfer_instruction);
 
+    //add memo for blockxroute transaction
+    // not required if enterprise
+    // if let RpcType::BlockXRoute = rpc_type {
+    //     let memo_instruction = create_trader_api_memo_instruction();
+    //     instructions.push(memo_instruction);
+    // }
+
     let message = Message::new(&instructions, Some(&tx_config.keypair.pubkey()));
     // Create transaction
     Transaction::new(&[&tx_config.keypair], message, recent_blockhash)
