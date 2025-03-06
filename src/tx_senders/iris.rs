@@ -42,36 +42,6 @@ impl IrisTxSender {
     }
 }
 
-#[derive(Deserialize)]
-pub struct JitoBundleStatusResponseInnerContext {
-    pub slot: u64,
-}
-
-#[derive(Deserialize)]
-pub struct JitoBundleStatusResponseInnerValue {
-    pub slot: u64,
-    pub bundle_id: String,
-    pub transactions: Vec<String>,
-    pub confirmation_status: String,
-    pub err: Value,
-}
-
-#[derive(Deserialize)]
-pub struct JitoBundleStatusResponseInner {
-    pub context: JitoBundleStatusResponseInnerContext,
-    pub value: Vec<JitoBundleStatusResponseInnerValue>,
-}
-#[derive(Deserialize)]
-pub struct JitoBundleStatusResponse {
-    pub result: JitoBundleStatusResponseInner,
-}
-
-#[derive(Deserialize)]
-pub struct JitoResponse {
-    //bundle id is response
-    pub result: String,
-}
-
 #[async_trait]
 impl TxSender for IrisTxSender {
     fn name(&self) -> String {
