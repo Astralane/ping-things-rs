@@ -69,7 +69,7 @@ pub fn create_tx_sender(
             let tx_sender = JitoTxSender::new(
                 name,
                 rpc_config.url,
-                rpc_config.auth.unwrap(),
+                rpc_config.auth.expect("use api key for jito"),
                 tx_config,
                 client,
             );
@@ -79,7 +79,7 @@ pub fn create_tx_sender(
             let tx_sender = iris::IrisTxSender::new(
                 name,
                 rpc_config.url,
-                rpc_config.auth.unwrap(),
+                rpc_config.auth.expect("use api key for iris"),
                 tx_config,
                 client,
             );
