@@ -80,11 +80,11 @@ impl TxSender for IrisTxSender {
             "params": [encoded_transaction, config]
         });
         debug!("sending tx: {}", body.to_string());
-        info!("sending to url: {}", self.url);
+        // info!("sending to url: {}", self.url);
         let response = self
             .client
             .post(&self.url)
-            // .header("api-key", &self.auth)
+            .header("api_key", &self.auth)
             .json(&body)
             .send()
             .await?;
