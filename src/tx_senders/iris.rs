@@ -7,9 +7,12 @@ use reqwest::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use solana_client::rpc_client::SerializableTransaction;
+use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::bs58;
 use solana_sdk::hash::Hash;
+use solana_sdk::signature::Signature;
 use solana_sdk::transaction::Transaction;
+use std::str::FromStr;
 use tracing::{debug, info};
 
 pub struct IrisTxSender {
@@ -42,6 +45,12 @@ impl IrisTxSender {
     }
 }
 
+#[derive(Deserialize)]
+struct RpcResponse {
+    jsonrpc: String,
+    id: u64,
+    result: String,
+}
 #[async_trait]
 impl TxSender for IrisTxSender {
     fn name(&self) -> String {
@@ -57,17 +66,25 @@ impl TxSender for IrisTxSender {
         let signature = tx.get_signature();
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
         let encoded_transaction = base64::encode(tx_bytes);
+        let config = RpcSendTransactionConfig {
+            skip_preflight: true,
+            preflight_commitment: None,
+            encoding: None,
+            max_retries: None,
+            min_context_slot: None,
+        };
         let body = json!({
             "jsonrpc": "2.0",
             "id": 1,
             "method": "sendTransaction",
-            "params": [encoded_transaction]
+            "params": [encoded_transaction, config]
         });
         debug!("sending tx: {}", body.to_string());
+        info!("sending to url: {}", self.url);
         let response = self
             .client
             .post(&self.url)
-            .header("api-key", &self.auth)
+            // .header("api-key", &self.auth)
             .json(&body)
             .send()
             .await?;
@@ -80,6 +97,9 @@ impl TxSender for IrisTxSender {
                 status
             ));
         }
-        Ok(TxResult::Signature(signature.clone()))
+        let response: RpcResponse = serde_json::from_str(&body)?;
+        let signature_response = Signature::from_str(&response.result)?;
+        assert_eq!(signature, &signature_response);
+        Ok(TxResult::Signature(signature_response))
     }
 }
