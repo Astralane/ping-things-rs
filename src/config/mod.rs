@@ -26,6 +26,7 @@ pub enum RpcType {
     BlockXRoute,
     Jito,
     Temporal,
+    Iris
 }
 #[derive(Clone, Debug, Deserialize)]
 pub struct RpcConfig {

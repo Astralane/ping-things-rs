@@ -12,7 +12,7 @@ use solana_sdk::hash::Hash;
 use solana_sdk::transaction::Transaction;
 use tracing::{debug, info};
 
-pub struct JitoTxSender {
+pub struct IrisTxSender {
     url: String,
     name: String,
     auth: String,
@@ -20,7 +20,7 @@ pub struct JitoTxSender {
     tx_config: TransactionConfig,
 }
 
-impl JitoTxSender {
+impl IrisTxSender {
     pub fn new(
         name: String,
         url: String,
@@ -38,7 +38,7 @@ impl JitoTxSender {
     }
 
     pub fn build_transaction_with_config(&self, index: u32, recent_blockhash: Hash) -> Transaction {
-        build_transaction_with_config(&self.tx_config, &RpcType::Jito, index, recent_blockhash)
+        build_transaction_with_config(&self.tx_config, &RpcType::Iris, index, recent_blockhash)
     }
 }
 
@@ -73,7 +73,7 @@ pub struct JitoResponse {
 }
 
 #[async_trait]
-impl TxSender for JitoTxSender {
+impl TxSender for IrisTxSender {
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -86,7 +86,7 @@ impl TxSender for JitoTxSender {
         let tx = self.build_transaction_with_config(index, recent_blockhash);
         let signature = tx.get_signature();
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
-        let encoded_transaction = bs58::encode(tx_bytes).into_string();
+        let encoded_transaction = base64::encode(tx_bytes);
         let body = json!({
             "jsonrpc": "2.0",
             "id": 1,
@@ -94,11 +94,10 @@ impl TxSender for JitoTxSender {
             "params": [encoded_transaction]
         });
         debug!("sending tx: {}", body.to_string());
-        let tx_url = format!("{}/api/v1/transactions", self.url);
         let response = self
             .client
-            .post(&tx_url)
-            .header("x-jito-authy", &self.auth)
+            .post(&self.url)
+            .header("api-key", &self.auth)
             .json(&body)
             .send()
             .await?;

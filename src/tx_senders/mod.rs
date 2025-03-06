@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 pub mod blockxroute;
 pub mod constants;
+mod iris;
 pub mod jito;
 pub mod solana_rpc;
 pub mod transaction;
@@ -65,7 +66,23 @@ pub fn create_tx_sender(
             Arc::new(tx_sender)
         }
         RpcType::Jito => {
-            let tx_sender = JitoTxSender::new(name, rpc_config.url, tx_config, client);
+            let tx_sender = JitoTxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.unwrap(),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::Iris => {
+            let tx_sender = iris::IrisTxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.unwrap(),
+                tx_config,
+                client,
+            );
             Arc::new(tx_sender)
         }
     }

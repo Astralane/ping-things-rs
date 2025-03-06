@@ -119,7 +119,7 @@ impl Bench {
             TxResult::Signature(signature) => {
                 Self::confirm_transaction(signature, http_client).await
             }
-            TxResult::BundleID(id) => Self::confirm_bundle(id, client).await,
+            TxResult::BundleID(id) => unreachable!(),
         };
 
         if let Ok(slot_landed) = subscription_result {
@@ -295,7 +295,7 @@ impl Bench {
                         )
                         .await
                         {
-                            error!("error send_and_confirm_transaction {:?}", e);
+                            error!("error in send_and_confirm_transaction {:?}", e);
                         }
                     });
                     tx_handles.push(hdl);
