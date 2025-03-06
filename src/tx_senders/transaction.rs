@@ -39,6 +39,14 @@ fn create_trader_api_memo_instruction() -> Instruction {
         data: BX_MEMO_MARKER_MSG.as_bytes().to_vec(),
     }
 }
+
+pub fn create_random_memo_instruction() -> Instruction {
+    Instruction {
+        accounts: vec![],
+        program_id: Pubkey::from_str(TRADER_API_MEMO_PROGRAM).unwrap(),
+        data: rand::thread_rng().gen::<[u8; 32]>().to_vec(),
+    }
+}
 pub fn build_transaction_with_config(
     tx_config: &TransactionConfig,
     rpc_type: &RpcType,
@@ -61,7 +69,7 @@ pub fn build_transaction_with_config(
         instructions.push(compute_unit_price);
     }
 
-    let memo_instruction = create_trader_api_memo_instruction();
+    let memo_instruction = create_random_memo_instruction();
     instructions.push(memo_instruction);
 
     if tx_config.tip > 0 {
