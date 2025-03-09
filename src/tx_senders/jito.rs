@@ -3,6 +3,7 @@ use crate::tx_senders::transaction::{build_transaction_with_config, TransactionC
 use crate::tx_senders::{TxResult, TxSender};
 use anyhow::Context;
 use async_trait::async_trait;
+use base64::Engine;
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -86,12 +87,15 @@ impl TxSender for JitoTxSender {
         let tx = self.build_transaction_with_config(index, recent_blockhash);
         let signature = tx.get_signature();
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
-        let encoded_transaction = bs58::encode(tx_bytes).into_string();
+        let encoded_transaction = base64::prelude::BASE64_STANDARD
+            .encode(tx_bytes);
         let body = json!({
             "jsonrpc": "2.0",
             "id": 1,
             "method": "sendTransaction",
-            "params": [encoded_transaction]
+            "params": [encoded_transaction, {
+                "encoding": "base64",
+                }]
         });
         debug!("sending tx: {}", body.to_string());
         let tx_url = format!("{}/api/v1/transactions?uuid={}", self.url, self.auth);

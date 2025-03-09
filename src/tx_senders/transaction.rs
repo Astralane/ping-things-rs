@@ -1,12 +1,9 @@
 use crate::config::{PingThingsArgs, RpcType};
-use crate::tx_senders::constants::{
-    BX_MEMO_MARKER_MSG, IRIS_TIP, JITO_TIP_WALLET, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM,
-    TRADER_API_TIP_WALLET,
-};
+use crate::tx_senders::constants::{BX_MEMO_MARKER_MSG, IRIS_TIP, JITO_TIP_WALLET, MEMO_PROGRAM, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET};
 use rand::Rng;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
-use solana_sdk::instruction::Instruction;
+use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::message::Message;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{EncodableKey, Keypair, Signer};
@@ -43,11 +40,17 @@ fn create_trader_api_memo_instruction() -> Instruction {
     }
 }
 
-pub fn create_random_memo_instruction() -> Instruction {
+pub fn create_random_memo_instruction(signer: Pubkey) -> Instruction {
+    let random_string = rand::thread_rng()
+        .sample_iter(&rand::distributions::Alphanumeric)
+        .take(8)
+        .map(char::from)
+        .collect::<String>();
+
     Instruction {
-        accounts: vec![],
-        program_id: Pubkey::from_str(TRADER_API_MEMO_PROGRAM).unwrap(),
-        data: rand::thread_rng().gen::<[u8; 32]>().to_vec(),
+        accounts: vec![AccountMeta::new(signer, true)],
+        program_id: MEMO_PROGRAM,
+        data: random_string.as_bytes().to_vec(),
     }
 }
 pub fn build_transaction_with_config(
@@ -72,7 +75,7 @@ pub fn build_transaction_with_config(
         instructions.push(compute_unit_price);
     }
 
-    let memo_instruction = create_random_memo_instruction();
+    let memo_instruction = create_random_memo_instruction(tx_config.keypair.pubkey());
     instructions.push(memo_instruction);
 
     if tx_config.tip > 0 {
