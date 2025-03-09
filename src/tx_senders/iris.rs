@@ -100,6 +100,7 @@ impl TxSender for IrisTxSender {
         }
         let response: RpcResponse = serde_json::from_str(&body)?;
         let signature_response = Signature::from_str(&response.result)?;
+        info!("signature got back from iris: {}", signature_response);
         assert_eq!(signature, &signature_response);
         Ok(TxResult::Signature(signature_response))
     }
