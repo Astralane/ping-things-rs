@@ -3,6 +3,7 @@ use crate::tx_senders::transaction::{build_transaction_with_config, TransactionC
 use crate::tx_senders::{TxResult, TxSender};
 use anyhow::Context;
 use async_trait::async_trait;
+use base64::Engine;
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -12,9 +13,8 @@ use solana_sdk::bs58;
 use solana_sdk::hash::Hash;
 use solana_sdk::signature::Signature;
 use solana_sdk::transaction::Transaction;
-use std::str::FromStr;
-use base64::Engine;
 use solana_transaction_status::UiTransactionEncoding;
+use std::str::FromStr;
 use tracing::{debug, info};
 
 pub struct IrisTxSender {
@@ -79,7 +79,10 @@ impl TxSender for IrisTxSender {
             "jsonrpc": "2.0",
             "id": 1,
             "method": "sendTransaction",
-            "params": [encoded_transaction, config]
+            "params": [encoded_transaction, {
+                "encoding": "base64",
+                "skipPreflight": true,
+            }]
         });
         debug!("sending tx: {}", body.to_string());
         // info!("sending to url: {}", self.url);
