@@ -13,6 +13,7 @@ use solana_sdk::hash::Hash;
 use solana_sdk::signature::Signature;
 use solana_sdk::transaction::Transaction;
 use std::str::FromStr;
+use base64::Engine;
 use solana_transaction_status::UiTransactionEncoding;
 use tracing::{debug, info};
 
@@ -66,7 +67,7 @@ impl TxSender for IrisTxSender {
         let tx = self.build_transaction_with_config(index, recent_blockhash);
         let signature = tx.get_signature();
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
-        let encoded_transaction = base64::encode(tx_bytes);
+        let encoded_transaction = base64::prelude::BASE64_STANDARD.encode(tx_bytes);
         let config = RpcSendTransactionConfig {
             skip_preflight: true,
             preflight_commitment: None,
