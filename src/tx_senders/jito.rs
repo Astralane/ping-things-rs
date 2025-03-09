@@ -98,7 +98,7 @@ impl TxSender for JitoTxSender {
         let response = self
             .client
             .post(&tx_url)
-            .header("x-jito-authy", &self.auth)
+            .header("x-jito-auth", &self.auth)
             .json(&body)
             .send()
             .await?;
