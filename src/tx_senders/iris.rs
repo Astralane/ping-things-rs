@@ -13,6 +13,7 @@ use solana_sdk::hash::Hash;
 use solana_sdk::signature::Signature;
 use solana_sdk::transaction::Transaction;
 use std::str::FromStr;
+use solana_transaction_status::UiTransactionEncoding;
 use tracing::{debug, info};
 
 pub struct IrisTxSender {
@@ -69,7 +70,7 @@ impl TxSender for IrisTxSender {
         let config = RpcSendTransactionConfig {
             skip_preflight: true,
             preflight_commitment: None,
-            encoding: None,
+            encoding: Some(UiTransactionEncoding::Base64),
             max_retries: None,
             min_context_slot: None,
         };
