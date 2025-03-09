@@ -94,11 +94,10 @@ impl TxSender for JitoTxSender {
             "params": [encoded_transaction]
         });
         debug!("sending tx: {}", body.to_string());
-        let tx_url = format!("{}/api/v1/transactions", self.url);
+        let tx_url = format!("{}/api/v1/transactions?uuid={}", self.url, self.auth);
         let response = self
             .client
             .post(&tx_url)
-            .header("x-jito-auth", &self.auth)
             .json(&body)
             .send()
             .await?;
