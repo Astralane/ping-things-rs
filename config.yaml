@@ -1,7 +1,7 @@
 rpc :
   "helius":
     url: "https://staked.helius-rpc.com?api-key=<ApiKey>"
-  "mainnet":
+  "Astralane":
     url: "https://mainnet-beta.solana.com"
   "blockxroute":
       url: "https://uk.solana.dex.blxrbdn.com/api/v2/submit"
@@ -14,7 +14,7 @@ rpc :
     url: "http://fra1.nozomi.temporal.xyz/?c="
     rpc_type: "temporal"
 
-txns_per_run: 10
+txns_per_run: 5
 txn_delay: 1
 runs: 60
 http_rpc: "https://staked.helius-rpc.com?api-key=<ApiKey>"
@@ -25,3 +25,4 @@ compute_unit_price: 50000
 compute_unit_limit: 20000
 verbose_log: false
 tip: 1000000
+max_retries: 0

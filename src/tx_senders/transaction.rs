@@ -18,6 +18,7 @@ pub struct TransactionConfig {
     pub compute_unit_limit: u32,
     pub compute_unit_price: u64,
     pub tip: u64,
+    pub max_retries: u32,
 }
 
 impl From<PingThingsArgs> for TransactionConfig {
@@ -29,6 +30,7 @@ impl From<PingThingsArgs> for TransactionConfig {
             compute_unit_limit: args.compute_unit_limit,
             compute_unit_price: args.compute_unit_price,
             tip: args.tip,
+            max_retries: args.max_retries,
         }
     }
 }

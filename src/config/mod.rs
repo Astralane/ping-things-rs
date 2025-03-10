@@ -16,6 +16,7 @@ pub struct PingThingsArgs {
     pub compute_unit_limit: u32,
     pub tip: u64,
     pub verbose_log: bool,
+    pub max_retries: u32,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]

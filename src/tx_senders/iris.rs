@@ -82,6 +82,7 @@ impl TxSender for IrisTxSender {
             "params": [encoded_transaction, {
                 "encoding": "base64",
                 "skipPreflight": true,
+                "maxRetries" : self.tx_config.max_retries,
             }]
         });
         debug!("sending tx: {}", body.to_string());
