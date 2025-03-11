@@ -9,6 +9,7 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio_util::sync::CancellationToken;
 use tracing::info;
+use crate::tx_senders::constants::SLOT_ERROR_THRESHOLD;
 
 pub struct ChainListener {
     pub current_slot: Arc<AtomicU64>,
@@ -72,9 +73,15 @@ impl ChainListener {
             slot = stream.next() => slot,
         } {
             if let SlotUpdate::FirstShredReceived { slot, .. } = slot {
+                if slot > current_slot.load(Ordering::Relaxed) + SLOT_ERROR_THRESHOLD {
+                    continue
+                }
                 current_slot.store(slot, Ordering::Relaxed);
             }
             if let SlotUpdate::Completed { slot, .. } = slot {
+                if slot > current_slot.load(Ordering::Relaxed) + SLOT_ERROR_THRESHOLD {
+                    continue
+                }
                 current_slot.store(slot + 1, Ordering::Relaxed);
             }
         }
