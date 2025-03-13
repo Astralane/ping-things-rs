@@ -63,7 +63,7 @@ impl TxSender for GenericRpc {
                     skip_preflight: true,
                     preflight_commitment: None,
                     encoding: Some(UiTransactionEncoding::Base64),
-                    max_retries: None,
+                    max_retries: Some(self.tx_config.max_retries as usize),
                     min_context_slot: None,
                 },
             )
