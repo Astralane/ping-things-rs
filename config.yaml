@@ -25,3 +25,4 @@ compute_unit_price: 50000
 compute_unit_limit: 20000
 verbose_log: false
 tip: 1000000
+max_retries: 0
