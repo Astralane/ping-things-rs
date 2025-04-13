@@ -28,6 +28,7 @@ pub enum RpcType {
     Jito,
     Temporal,
     Iris,
+    IrisPaladin
 }
 #[derive(Clone, Debug, Deserialize)]
 pub struct RpcConfig {
