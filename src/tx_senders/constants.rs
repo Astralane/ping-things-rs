@@ -14,3 +14,5 @@ pub const NOZOMI_TIP: &str = "TEMPaMeCRFAS9EKF53Jd6KpHxgL47uWLcpFArU1Fanq";
 pub const IRIS_TIP: &str = "astrazznxsGUhWShqgNtAdfrzP2G83DzcWVJDxwV9bF";
 
 pub const MIN_TIP_AMOUNT: u64 = 1_000_000;
+
+pub const SLOT_ERROR_THRESHOLD: u64 = 5;
