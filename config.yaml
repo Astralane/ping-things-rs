@@ -1,24 +1,28 @@
 rpc :
-  "test":
-      url: "https://fr.gateway.astralane.io/iris"
-      auth: "test4eq3EnqukSqXsmZkYdF4rPJu79GaNDD7WQTH21DWObaJa2RxNDDpaDpFZ0m5"
-      rpc_type: "iris"
+  "helius":
+    url: "https://staked.helius-rpc.com?api-key=<ApiKey>"
+  "mainnet":
+    url: "https://mainnet-beta.solana.com"
+  "blockxroute":
+      url: "https://uk.solana.dex.blxrbdn.com/api/v2/submit"
+      auth: "<Auth>"
+      rpc_type: "blockxroute"
+  "jito":
+    url: "https://frankfurt.mainnet.block-engine.jito.wtf/api/v1/bundles"
+    rpc_type: "jito"
+  "temporal":
+    url: "http://fra1.nozomi.temporal.xyz/?c="
+    rpc_type: "temporal"
 
-txns_per_run: 1
-txn_delay_min: 60
-http_rpc: "http://rpc:8899"
-ws_rpc: "ws://rpc:8900"
-keypair_dir: "/home/rxw777/.config/solana/id.json"
+txns_per_run: 10
+txn_delay: 1
+runs: 60
+http_rpc: "https://staked.helius-rpc.com?api-key=<ApiKey>"
+ws_rpc: "wss://staked.helius-rpc.com?api-key=<ApiKey>"
+keypair_dir: "/Users/nuel/.config/solana/id.json"
 enable_priority_fee: true
 compute_unit_price: 50000
 compute_unit_limit: 20000
 verbose_log: false
 tip: 1000000
 max_retries: 0
-otpl_endpoint: "http://client-rpc:4317"
-rust_log : "info"
-name: "this"
-discord_alert: true
-discord_webhook: ""
-slack_alert: true
-slack_webhook: ""

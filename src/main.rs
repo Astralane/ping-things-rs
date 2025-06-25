@@ -6,34 +6,24 @@ use crate::state_listeners::ChainListener;
 use tokio::signal;
 use tokio_util::sync::CancellationToken;
 use tracing::info;
-use crate::otpl_setup::{get_subscriber_with_otpl, init_subscriber};
 
 mod bench;
 mod config;
 mod state_listeners;
 mod tx_senders;
-mod otpl_setup;
-mod alert;
 
 #[tokio::main]
 async fn main() {
+    tracing::subscriber::set_global_default(
+        tracing_subscriber::FmtSubscriber::builder()
+            .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+            .finish(),
+    )
+    .unwrap();
     let config = PingThingsArgs::new();
-    println!("starting with config {:?}", config);
-
-    let sub = get_subscriber_with_otpl("test".to_string(), config.rust_log.clone(), config.otpl_endpoint.clone(), std::io::stdout);
-    init_subscriber(sub);
-    // 
-    // tracing::subscriber::set_global_default(
-    //     tracing_subscriber::FmtSubscriber::builder()
-    //         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-    //         .finish(),
-    // )
-    //     .unwrap();
-
+    info!("starting with config {:?}", config);
 
     let cancellation_token = CancellationToken::new();
-
-
 
     // wait for end signal
     let cancellation_token_clone = cancellation_token.clone();
@@ -48,9 +38,6 @@ async fn main() {
             }
         }
     });
-
-    // let sub = get_subscriber_with_otpl("test".to_string(), config.rust_log.clone(), config.otpl_endpoint.clone(), std::io::stdout);
-    // init_subscriber(sub);
 
     let chain_listener = ChainListener::new(
         config.http_rpc.clone(),
