@@ -18,7 +18,7 @@ pub struct PingThingsArgs {
     pub max_retries: u64,
     pub otpl_endpoint: String,
     pub rust_log: String,
-    pub name: String,
+    pub name: String
     pub discord_alert: bool,
     pub discord_webhook: String,
     pub slack_webhook: String,
