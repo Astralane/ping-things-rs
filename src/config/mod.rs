@@ -7,8 +7,7 @@ pub struct PingThingsArgs {
     // rpc_name -> rpc_url
     pub rpc: HashMap<String, RpcConfig>,
     pub txns_per_run: u32,
-    pub txn_delay: u32,
-    pub runs: u32,
+    pub txn_delay_min: u32,
     pub http_rpc: String,
     pub ws_rpc: String,
     pub keypair_dir: String,
@@ -16,7 +15,14 @@ pub struct PingThingsArgs {
     pub compute_unit_limit: u32,
     pub tip: u64,
     pub verbose_log: bool,
-    pub max_retries: u64
+    pub max_retries: u64,
+    pub otpl_endpoint: String,
+    pub rust_log: String,
+    pub name: String
+    pub discord_alert: bool,
+    pub discord_webhook: String,
+    pub slack_webhook: String,
+    pub slack_alert: bool,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]

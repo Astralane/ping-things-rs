@@ -24,9 +24,10 @@ use tokio::sync::mpsc;
 use tokio::time::{sleep, timeout};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
+use crate::alert::{connection_error_alert, didnt_landed_warn};
 
 pub struct Bench {
-    config: PingThingsArgs,
+    pub config: PingThingsArgs,
     tx_subscribe_sender: tokio::sync::mpsc::Sender<TxMetrics>,
     cancel: CancellationToken,
     rpcs: Vec<Arc<dyn TxSender>>,
@@ -100,7 +101,7 @@ impl Bench {
     }
 
     pub async fn send_and_confirm_transaction(
-        tx_index: u32,
+        config: PingThingsArgs,
         rpc_sender: Arc<dyn TxSender>,
         recent_blockhash: Hash,
         slot_sent: u64,
@@ -110,6 +111,7 @@ impl Bench {
         client: Client,
     ) -> anyhow::Result<()> {
         let start = tokio::time::Instant::now();
+        let tx_index = 0;
         let tx_result = rpc_sender
             .send_transaction(tx_index, recent_blockhash)
             .await?;
@@ -139,6 +141,7 @@ impl Bench {
                 .expect("cannot send to file saver loop");
         } else {
             // log error
+            didnt_landed_warn(config, rpc_name.clone()).await;
             warn!(
                 "waited {:}s, no response from signature subscription {:?} ",
                 now.elapsed().as_secs(),
@@ -247,7 +250,7 @@ impl Bench {
     }
     async fn start_inner(self, curr_slot: Arc<AtomicU64>, blk_hash: Arc<RwLock<Option<Hash>>>) {
         info!("starting bench");
-        let config = self.config;
+        let config = self.config.clone();
         let mut tx_handles = Vec::new();
         info!("connecting to http rpc {:?}", config.http_rpc.clone());
         let http_rpc = Arc::new(RpcClient::new_with_commitment(
@@ -261,8 +264,8 @@ impl Bench {
             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         }
 
-        'outer: for i in 1..=config.runs {
-            info!("starting run {}", i);
+        'outer: loop {
+            info!("starting run at time");
             for j in 1..=config.txns_per_run {
                 // send transaction and save to all rpc
                 for rpc in &self.rpcs {
@@ -280,32 +283,30 @@ impl Bench {
                     let rpc_sender = rpc.clone();
                     let client = self.client.clone();
                     let http_rpc = http_rpc.clone();
+                    let config = self.config.clone();
                     let hdl = tokio::spawn(async move {
                         //unique index based on progress of both loop
-                        let index = (i - 1) * config.txns_per_run + j;
                         if let Err(e) = Self::send_and_confirm_transaction(
-                            index,
+                            config.clone(),
                             rpc_sender,
                             recent_blockhash,
                             slot_sent,
                             tx_save_sender,
-                            rpc_name,
+                            rpc_name.clone(),
                             http_rpc,
                             client,
                         )
                         .await
                         {
+                            connection_error_alert(config.clone(), rpc_name.clone()).await;
                             error!("error in send_and_confirm_transaction {:?}", e);
                         }
                     });
                     tx_handles.push(hdl);
                 }
             }
-            //run delay if not last loop
-            if i != config.runs {
-                info!("taking a breather...");
-                tokio::time::sleep(Duration::from_secs(config.txn_delay as u64)).await;
-            }
+            info!("taking a breather...");
+            tokio::time::sleep(Duration::from_secs(config.txn_delay_min as u64)).await;
         }
         info!("waiting for transactions to complete...");
         // wait for all transactions to complete
