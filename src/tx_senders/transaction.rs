@@ -77,9 +77,6 @@ pub fn build_transaction_with_config(
         instructions.push(compute_unit_price);
     }
 
-    let memo_instruction = create_random_memo_instruction(tx_config.keypair.pubkey());
-    instructions.push(memo_instruction);
-
     if tx_config.tip > 0 {
         let tip_instruction = match rpc_type {
             RpcType::BlockXRoute => system_instruction::transfer(

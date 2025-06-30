@@ -306,7 +306,7 @@ impl Bench {
                 }
             }
             info!("taking a breather...");
-            tokio::time::sleep(Duration::from_secs(config.txn_delay_min as u64)).await;
+            tokio::time::sleep(Duration::from_secs((config.txn_delay_min * 60) as u64)).await;
         }
         info!("waiting for transactions to complete...");
         // wait for all transactions to complete
