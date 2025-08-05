@@ -13,6 +13,11 @@ pub const MEMO_PROGRAM: Pubkey = pubkey!("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLG
 pub const NOZOMI_TIP: &str = "TEMPaMeCRFAS9EKF53Jd6KpHxgL47uWLcpFArU1Fanq";
 pub const IRIS_TIP: &str = "astrazznxsGUhWShqgNtAdfrzP2G83DzcWVJDxwV9bF";
 
-pub const ZERO_SLOT: &str = "7y4whZmw388w1ggjToDLSBLv47drw5SUXcLk6jtmwixd";
+pub const ZERO_SLOT: &str = "FCjUJZ1qozm1e8romw216qyfQMaaWKxWsuySnumVCCNe";
+
+pub const HELIUS: &str = "5VY91ws6B2hMmBFRsXkoAAdsPHBJwRfBht4DXox3xkwn";
+pub const BLOCKRAZER: &str = "68Pwb4jS7eZATjDfhmTXgRJjCiZmw1L7Huy4HNpnxJ3o";
+pub const NODE1: &str = "node1Qm1bV4fwYnCurP8otJ9s5yrkPq7SPZ5uhj3Tsv";
+pub const FLASHBLOCK: &str = "FLaSHR4Vv7sttd6TyDF4yR1bJyAxRwWKbohDytEMu3wL";
 
 pub const MIN_TIP_AMOUNT: u64 = 1_000_000;

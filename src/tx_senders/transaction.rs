@@ -1,5 +1,8 @@
 use crate::config::{PingThingsArgs, RpcType};
-use crate::tx_senders::constants::{BX_MEMO_MARKER_MSG, IRIS_TIP, JITO_TIP_WALLET, MEMO_PROGRAM, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET, ZERO_SLOT};
+use crate::tx_senders::constants::{
+    BLOCKRAZER, BX_MEMO_MARKER_MSG, FLASHBLOCK, HELIUS, IRIS_TIP, JITO_TIP_WALLET, MEMO_PROGRAM,
+    NODE1, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET, ZERO_SLOT,
+};
 use rand::Rng;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
@@ -92,22 +95,16 @@ pub fn build_transaction_with_config(
                 &Pubkey::from_str(JITO_TIP_WALLET).unwrap(),
                 tx_config.tip,
             ),
-            RpcType::SolanaRpc => {
-                // add an extra transfer to self
-                system_instruction::transfer(
-                    &tx_config.keypair.pubkey(),
-                    &tx_config.keypair.pubkey(),
-                    tx_config.tip,
-                )
-            }
-            RpcType::Temporal => {
-                // add an extra transfer to self
-                system_instruction::transfer(
-                    &tx_config.keypair.pubkey(),
-                    &Pubkey::from_str(NOZOMI_TIP).unwrap(),
-                    tx_config.tip,
-                )
-            }
+            RpcType::SolanaRpc => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &tx_config.keypair.pubkey(),
+                tx_config.tip,
+            ),
+            RpcType::Temporal => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(NOZOMI_TIP).unwrap(),
+                tx_config.tip,
+            ),
             RpcType::Iris => system_instruction::transfer(
                 &tx_config.keypair.pubkey(),
                 &Pubkey::from_str(IRIS_TIP).unwrap(),
@@ -121,6 +118,26 @@ pub fn build_transaction_with_config(
             RpcType::ZeroSlot => system_instruction::transfer(
                 &tx_config.keypair.pubkey(),
                 &Pubkey::from_str(ZERO_SLOT).unwrap(),
+                tx_config.tip,
+            ),
+            RpcType::Helius => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(HELIUS).unwrap(),
+                tx_config.tip,
+            ),
+            RpcType::BlockRazer => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(BLOCKRAZER).unwrap(),
+                tx_config.tip,
+            ),
+            RpcType::Flashblock => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(FLASHBLOCK).unwrap(),
+                tx_config.tip,
+            ),
+            RpcType::Node1 => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(NODE1).unwrap(),
                 tx_config.tip,
             ),
         };

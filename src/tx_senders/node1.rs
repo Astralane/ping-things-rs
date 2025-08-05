@@ -17,17 +17,25 @@ use solana_transaction_status::UiTransactionEncoding;
 use std::str::FromStr;
 use tracing::{debug, info};
 
-pub struct ZeroSlotTxSender {
+pub struct Node1Sender {
     url: String,
     name: String,
+    auth: String,
     client: Client,
     tx_config: TransactionConfig,
 }
 
-impl ZeroSlotTxSender {
-    pub fn new(name: String, url: String, tx_config: TransactionConfig, client: Client) -> Self {
+impl Node1Sender {
+    pub fn new(
+        name: String,
+        url: String,
+        auth: String,
+        tx_config: TransactionConfig,
+        client: Client,
+    ) -> Self {
         Self {
             url,
+            auth,
             name,
             tx_config,
             client,
@@ -35,7 +43,7 @@ impl ZeroSlotTxSender {
     }
 
     pub fn build_transaction_with_config(&self, index: u32, recent_blockhash: Hash) -> Transaction {
-        build_transaction_with_config(&self.tx_config, &RpcType::ZeroSlot, index, recent_blockhash)
+        build_transaction_with_config(&self.tx_config, &RpcType::Node1, index, recent_blockhash)
     }
 }
 
@@ -46,7 +54,7 @@ struct RpcResponse {
     result: String,
 }
 #[async_trait]
-impl TxSender for ZeroSlotTxSender {
+impl TxSender for Node1Sender {
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -79,7 +87,13 @@ impl TxSender for ZeroSlotTxSender {
         });
         debug!("sending tx: {}", body.to_string());
         // info!("sending to url: {}", self.url);
-        let response = self.client.post(&self.url).json(&body).send().await?;
+        let response = self
+            .client
+            .post(&self.url)
+            .header("api-key", &self.auth)
+            .json(&body)
+            .send()
+            .await?;
         let status = response.status();
         let body = response.text().await?;
         if !status.is_success() {
@@ -91,7 +105,7 @@ impl TxSender for ZeroSlotTxSender {
         }
         let response: RpcResponse = serde_json::from_str(&body)?;
         let signature_response = Signature::from_str(&response.result)?;
-        info!("signature got back from 0slot: {}", signature_response);
+        info!("signature got back from node1: {}", signature_response);
         assert_eq!(signature, &signature_response);
         Ok(TxResult::Signature(signature_response))
     }

@@ -8,13 +8,16 @@ use solana_sdk::hash::Hash;
 use solana_sdk::signature::Signature;
 use std::sync::Arc;
 
+mod blockrazer;
 pub mod blockxroute;
 pub mod constants;
+mod flashblock;
 mod iris;
+mod iris_paladin;
 pub mod jito;
+mod node1;
 pub mod solana_rpc;
 pub mod transaction;
-mod iris_paladin;
 mod zero_slot;
 
 #[derive(Debug, Clone)]
@@ -67,6 +70,10 @@ pub fn create_tx_sender(
             let tx_sender = GenericRpc::new(name, rpc_config.url, tx_config, RpcType::Temporal);
             Arc::new(tx_sender)
         }
+        RpcType::Helius => {
+            let tx_sender = GenericRpc::new(name, rpc_config.url, tx_config, RpcType::Helius);
+            Arc::new(tx_sender)
+        }
         RpcType::Jito => {
             let tx_sender = JitoTxSender::new(
                 name,
@@ -98,9 +105,35 @@ pub fn create_tx_sender(
             Arc::new(tx_sender)
         }
         RpcType::ZeroSlot => {
-            let tx_sender = zero_slot::ZeroSlotTxSender::new(
+            let tx_sender =
+                zero_slot::ZeroSlotTxSender::new(name, rpc_config.url, tx_config, client);
+            Arc::new(tx_sender)
+        }
+        RpcType::BlockRazer => {
+            let tx_sender = blockrazer::BlockRazerSender::new(
                 name,
                 rpc_config.url,
+                rpc_config.auth.expect("use api key for blockrazer"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::Flashblock => {
+            let tx_sender = flashblock::FlashblockSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for flashblock"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::Node1 => {
+            let tx_sender = node1::Node1Sender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for node1"),
                 tx_config,
                 client,
             );
