@@ -13,4 +13,6 @@ pub const MEMO_PROGRAM: Pubkey = pubkey!("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLG
 pub const NOZOMI_TIP: &str = "TEMPaMeCRFAS9EKF53Jd6KpHxgL47uWLcpFArU1Fanq";
 pub const IRIS_TIP: &str = "astrazznxsGUhWShqgNtAdfrzP2G83DzcWVJDxwV9bF";
 
+pub const ZERO_SLOT: &str = "7y4whZmw388w1ggjToDLSBLv47drw5SUXcLk6jtmwixd";
+
 pub const MIN_TIP_AMOUNT: u64 = 1_000_000;

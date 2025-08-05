@@ -15,6 +15,7 @@ pub mod jito;
 pub mod solana_rpc;
 pub mod transaction;
 mod iris_paladin;
+mod zero_slot;
 
 #[derive(Debug, Clone)]
 pub enum TxResult {
@@ -91,6 +92,15 @@ pub fn create_tx_sender(
                 name,
                 rpc_config.url,
                 rpc_config.auth.expect("use api key for iris paladin"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::ZeroSlot => {
+            let tx_sender = zero_slot::ZeroSlotTxSender::new(
+                name,
+                rpc_config.url,
                 tx_config,
                 client,
             );

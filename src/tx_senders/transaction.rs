@@ -1,5 +1,5 @@
 use crate::config::{PingThingsArgs, RpcType};
-use crate::tx_senders::constants::{BX_MEMO_MARKER_MSG, IRIS_TIP, JITO_TIP_WALLET, MEMO_PROGRAM, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET};
+use crate::tx_senders::constants::{BX_MEMO_MARKER_MSG, IRIS_TIP, JITO_TIP_WALLET, MEMO_PROGRAM, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET, ZERO_SLOT};
 use rand::Rng;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
@@ -116,6 +116,11 @@ pub fn build_transaction_with_config(
             RpcType::IrisPaladin => system_instruction::transfer(
                 &tx_config.keypair.pubkey(),
                 &Pubkey::from_str(IRIS_TIP).unwrap(),
+                tx_config.tip,
+            ),
+            RpcType::ZeroSlot => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(ZERO_SLOT).unwrap(),
                 tx_config.tip,
             ),
         };
