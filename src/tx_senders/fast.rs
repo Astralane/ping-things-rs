@@ -17,7 +17,7 @@ use solana_transaction_status::UiTransactionEncoding;
 use std::str::FromStr;
 use tracing::{debug, info};
 
-pub struct FlashblockSender {
+pub struct FastSender {
     url: String,
     name: String,
     auth: String,
@@ -25,7 +25,7 @@ pub struct FlashblockSender {
     tx_config: TransactionConfig,
 }
 
-impl FlashblockSender {
+impl FastSender {
     pub fn new(
         name: String,
         url: String,
@@ -43,26 +43,23 @@ impl FlashblockSender {
     }
 
     pub fn build_transaction_with_config(&self, index: u32, recent_blockhash: Hash) -> Transaction {
-        build_transaction_with_config(
-            &self.tx_config,
-            &RpcType::Flashblock,
-            index,
-            recent_blockhash,
-        )
+        build_transaction_with_config(&self.tx_config, &RpcType::Fast, index, recent_blockhash)
     }
 }
 
 #[derive(Deserialize)]
 struct RpcResponse {
-    data: Data,
-}
-#[derive(Deserialize)]
-struct Data {
-    signatures: Vec<String>,
+    jsonrpc: String,
+    id: u64,
+    result: Result,
 }
 
+#[derive(Deserialize)]
+struct Result {
+    signature: String,
+}
 #[async_trait]
-impl TxSender for FlashblockSender {
+impl TxSender for FastSender {
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -84,14 +81,21 @@ impl TxSender for FlashblockSender {
             min_context_slot: None,
         };
         let body = json!({
-            "transactions": [encoded_transaction]
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "sendTransaction",
+            "params": [encoded_transaction, {
+                "encoding": "base64",
+                "skipPreflight": true,
+                "maxRetries": self.tx_config.max_retries,
+            }]
         });
         debug!("sending tx: {}", body.to_string());
         // info!("sending to url: {}", self.url);
         let response = self
             .client
             .post(&self.url)
-            .header("Authorization", &self.auth)
+            .header("x-api-key", &self.auth)
             .json(&body)
             .send()
             .await?;
@@ -105,8 +109,8 @@ impl TxSender for FlashblockSender {
             ));
         }
         let response: RpcResponse = serde_json::from_str(&body)?;
-        let signature_response = Signature::from_str(&response.data.signatures[0])?;
-        info!("signature got back from flashblock: {}", signature_response);
+        let signature_response = Signature::from_str(&response.result.signature)?;
+        info!("signature got back from fast: {}", signature_response);
         assert_eq!(signature, &signature_response);
         Ok(TxResult::Signature(signature_response))
     }

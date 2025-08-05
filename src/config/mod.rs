@@ -34,6 +34,8 @@ pub enum RpcType {
     Node1,
     BlockRazer,
     Flashblock,
+    NextBlock,
+    Fast,
 }
 #[derive(Clone, Debug, Deserialize)]
 pub struct RpcConfig {

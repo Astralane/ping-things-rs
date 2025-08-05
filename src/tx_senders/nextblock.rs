@@ -17,7 +17,7 @@ use solana_transaction_status::UiTransactionEncoding;
 use std::str::FromStr;
 use tracing::{debug, info};
 
-pub struct FlashblockSender {
+pub struct NextBlockSender {
     url: String,
     name: String,
     auth: String,
@@ -25,7 +25,7 @@ pub struct FlashblockSender {
     tx_config: TransactionConfig,
 }
 
-impl FlashblockSender {
+impl NextBlockSender {
     pub fn new(
         name: String,
         url: String,
@@ -45,7 +45,7 @@ impl FlashblockSender {
     pub fn build_transaction_with_config(&self, index: u32, recent_blockhash: Hash) -> Transaction {
         build_transaction_with_config(
             &self.tx_config,
-            &RpcType::Flashblock,
+            &RpcType::NextBlock,
             index,
             recent_blockhash,
         )
@@ -54,15 +54,10 @@ impl FlashblockSender {
 
 #[derive(Deserialize)]
 struct RpcResponse {
-    data: Data,
+    signature: String,
 }
-#[derive(Deserialize)]
-struct Data {
-    signatures: Vec<String>,
-}
-
 #[async_trait]
-impl TxSender for FlashblockSender {
+impl TxSender for NextBlockSender {
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -84,14 +79,16 @@ impl TxSender for FlashblockSender {
             min_context_slot: None,
         };
         let body = json!({
-            "transactions": [encoded_transaction]
+            "transaction": {
+                "content" : encoded_transaction,
+            }
         });
         debug!("sending tx: {}", body.to_string());
         // info!("sending to url: {}", self.url);
         let response = self
             .client
             .post(&self.url)
-            .header("Authorization", &self.auth)
+            .header("authorization", &self.auth)
             .json(&body)
             .send()
             .await?;
@@ -105,8 +102,8 @@ impl TxSender for FlashblockSender {
             ));
         }
         let response: RpcResponse = serde_json::from_str(&body)?;
-        let signature_response = Signature::from_str(&response.data.signatures[0])?;
-        info!("signature got back from flashblock: {}", signature_response);
+        let signature_response = Signature::from_str(&response.signature)?;
+        info!("signature got back from iris: {}", signature_response);
         assert_eq!(signature, &signature_response);
         Ok(TxResult::Signature(signature_response))
     }

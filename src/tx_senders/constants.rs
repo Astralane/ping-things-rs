@@ -19,5 +19,7 @@ pub const HELIUS: &str = "5VY91ws6B2hMmBFRsXkoAAdsPHBJwRfBht4DXox3xkwn";
 pub const BLOCKRAZER: &str = "68Pwb4jS7eZATjDfhmTXgRJjCiZmw1L7Huy4HNpnxJ3o";
 pub const NODE1: &str = "node1Qm1bV4fwYnCurP8otJ9s5yrkPq7SPZ5uhj3Tsv";
 pub const FLASHBLOCK: &str = "FLaSHR4Vv7sttd6TyDF4yR1bJyAxRwWKbohDytEMu3wL";
+pub const NEXTBLOCK: &str = "NextbLoCkVtMGcV47JzewQdvBpLqT9TxQFozQkN98pE";
+pub const FAST: &str = "FAST3dMFZvESiEipBvLSiXq3QCV51o3xuoHScqRU6cB6";
 
 pub const MIN_TIP_AMOUNT: u64 = 1_000_000;

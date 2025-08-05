@@ -11,10 +11,12 @@ use std::sync::Arc;
 mod blockrazer;
 pub mod blockxroute;
 pub mod constants;
+mod fast;
 mod flashblock;
 mod iris;
 mod iris_paladin;
 pub mod jito;
+mod nextblock;
 mod node1;
 pub mod solana_rpc;
 pub mod transaction;
@@ -134,6 +136,26 @@ pub fn create_tx_sender(
                 name,
                 rpc_config.url,
                 rpc_config.auth.expect("use api key for node1"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::NextBlock => {
+            let tx_sender = nextblock::NextBlockSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for NextBlock"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::Fast => {
+            let tx_sender = fast::FastSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for fast"),
                 tx_config,
                 client,
             );

@@ -1,7 +1,9 @@
+use crate::config::RpcType::Fast;
 use crate::config::{PingThingsArgs, RpcType};
 use crate::tx_senders::constants::{
-    BLOCKRAZER, BX_MEMO_MARKER_MSG, FLASHBLOCK, HELIUS, IRIS_TIP, JITO_TIP_WALLET, MEMO_PROGRAM,
-    NODE1, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET, ZERO_SLOT,
+    BLOCKRAZER, BX_MEMO_MARKER_MSG, FAST, FLASHBLOCK, HELIUS, IRIS_TIP, JITO_TIP_WALLET,
+    MEMO_PROGRAM, NEXTBLOCK, NODE1, NOZOMI_TIP, TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET,
+    ZERO_SLOT,
 };
 use rand::Rng;
 use solana_sdk::compute_budget::ComputeBudgetInstruction;
@@ -138,6 +140,16 @@ pub fn build_transaction_with_config(
             RpcType::Node1 => system_instruction::transfer(
                 &tx_config.keypair.pubkey(),
                 &Pubkey::from_str(NODE1).unwrap(),
+                tx_config.tip,
+            ),
+            RpcType::NextBlock => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(NEXTBLOCK).unwrap(),
+                tx_config.tip,
+            ),
+            RpcType::Fast => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(FAST).unwrap(),
                 tx_config.tip,
             ),
         };
