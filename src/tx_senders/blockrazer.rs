@@ -54,9 +54,7 @@ impl BlockRazerSender {
 
 #[derive(Deserialize)]
 struct RpcResponse {
-    jsonrpc: String,
-    id: u64,
-    result: String,
+   signature: String,
 }
 #[async_trait]
 impl TxSender for BlockRazerSender {
@@ -81,14 +79,8 @@ impl TxSender for BlockRazerSender {
             min_context_slot: None,
         };
         let body = json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "sendTransaction",
-            "params": [encoded_transaction, {
-                "encoding": "base64",
-                "skipPreflight": true,
-                "maxRetries": self.tx_config.max_retries,
-            }]
+            "transaction" : encoded_transaction,
+            "mode" : "fast"
         });
         debug!("sending tx: {}", body.to_string());
         // info!("sending to url: {}", self.url);
@@ -109,7 +101,7 @@ impl TxSender for BlockRazerSender {
             ));
         }
         let response: RpcResponse = serde_json::from_str(&body)?;
-        let signature_response = Signature::from_str(&response.result)?;
+        let signature_response = Signature::from_str(&response.signature)?;
         info!("signature got back from blockrazer: {}", signature_response);
         assert_eq!(signature, &signature_response);
         Ok(TxResult::Signature(signature_response))
