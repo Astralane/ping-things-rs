@@ -11,6 +11,7 @@ use std::sync::Arc;
 pub mod blockxroute;
 pub mod constants;
 mod iris;
+mod iris_batch;
 pub mod jito;
 pub mod solana_rpc;
 pub mod transaction;
@@ -34,11 +35,30 @@ impl Into<String> for TxResult {
 #[async_trait]
 pub trait TxSender: Sync + Send {
     fn name(&self) -> String;
+
+    /// Whether this sender uses batch mode (sendBatch API).
+    fn is_batch(&self) -> bool {
+        false
+    }
+
     async fn send_transaction(
         &self,
         index: u32,
         recent_blockhash: Hash,
     ) -> anyhow::Result<TxResult>;
+
+    /// Send multiple transactions in a single API call.
+    /// Default implementation sends them individually.
+    async fn send_batch(
+        &self,
+        indices: &[(u32, Hash)],
+    ) -> anyhow::Result<Vec<TxResult>> {
+        let mut results = Vec::with_capacity(indices.len());
+        for &(index, blockhash) in indices {
+            results.push(self.send_transaction(index, blockhash).await?);
+        }
+        Ok(results)
+    }
 }
 
 pub fn create_tx_sender(
@@ -91,6 +111,16 @@ pub fn create_tx_sender(
                 name,
                 rpc_config.url,
                 rpc_config.auth.expect("use api key for iris paladin"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::IrisBatch => {
+            let tx_sender = iris_batch::IrisBatchTxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for iris batch"),
                 tx_config,
                 client,
             );

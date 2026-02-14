@@ -263,44 +263,151 @@ impl Bench {
 
         'outer: for i in 1..=config.runs {
             info!("starting run {}", i);
-            for j in 1..=config.txns_per_run {
-                // send transaction and save to all rpc
-                for rpc in &self.rpcs {
-                    if self.cancel.is_cancelled() {
-                        info!("cancellation signal received, exiting transaction loop");
-                        break 'outer;
-                    };
+
+            for rpc in &self.rpcs {
+                if self.cancel.is_cancelled() {
+                    info!("cancellation signal received, exiting transaction loop");
+                    break 'outer;
+                }
+
+                if rpc.is_batch() {
+                    // Batch path: build all txns_per_run transactions, send in one call
                     let recent_blockhash = {
                         let blk_hash = blk_hash.read().unwrap();
                         (*blk_hash).unwrap()
                     };
-                    let tx_save_sender = self.tx_subscribe_sender.clone();
                     let slot_sent = curr_slot.load(Ordering::Relaxed);
-                    let rpc_name = rpc.name();
+
+                    let indices: Vec<(u32, Hash)> = (1..=config.txns_per_run)
+                        .map(|j| {
+                            let index = (i - 1) * config.txns_per_run + j;
+                            (index, recent_blockhash)
+                        })
+                        .collect();
+
                     let rpc_sender = rpc.clone();
+                    let rpc_name = rpc.name();
+                    let tx_save_sender = self.tx_subscribe_sender.clone();
+                    let http_rpc_clone = http_rpc.clone();
                     let client = self.client.clone();
-                    let http_rpc = http_rpc.clone();
+
                     let hdl = tokio::spawn(async move {
-                        //unique index based on progress of both loop
-                        let index = (i - 1) * config.txns_per_run + j;
-                        if let Err(e) = Self::send_and_confirm_transaction(
-                            index,
-                            rpc_sender,
-                            recent_blockhash,
-                            slot_sent,
-                            tx_save_sender,
-                            rpc_name,
-                            http_rpc,
-                            client,
-                        )
-                        .await
-                        {
-                            error!("error in send_and_confirm_transaction {:?}", e);
+                        let start = tokio::time::Instant::now();
+                        match rpc_sender.send_batch(&indices).await {
+                            Ok(results) => {
+                                let batch_elapsed = start.elapsed().as_millis() as u64;
+                                info!(
+                                    "batch send completed: {} txns in {}ms",
+                                    results.len(),
+                                    batch_elapsed
+                                );
+                                // Confirm each signature individually
+                                let mut confirm_handles = Vec::new();
+                                for (idx, result) in results.into_iter().enumerate() {
+                                    let tx_index = indices[idx].0;
+                                    let rpc_name = rpc_name.clone();
+                                    let tx_save_sender = tx_save_sender.clone();
+                                    let http_rpc = http_rpc_clone.clone();
+
+                                    let hdl = tokio::spawn(async move {
+                                        match result {
+                                            TxResult::Signature(signature) => {
+                                                match Self::confirm_transaction(
+                                                    signature,
+                                                    http_rpc,
+                                                )
+                                                .await
+                                                {
+                                                    Ok(slot_landed) => {
+                                                        let latency =
+                                                            slot_landed.saturating_sub(slot_sent);
+                                                        let _ = tx_save_sender
+                                                            .send(TxMetrics {
+                                                                success: true,
+                                                                elapsed: Some(batch_elapsed),
+                                                                slot_sent,
+                                                                slot_landed: Some(slot_landed),
+                                                                slot_latency: Some(latency),
+                                                                rpc_name,
+                                                                index: tx_index,
+                                                                signature: signature.to_string(),
+                                                            })
+                                                            .await;
+                                                    }
+                                                    Err(_) => {
+                                                        warn!(
+                                                            "batch tx {} failed to confirm",
+                                                            signature
+                                                        );
+                                                        let _ = tx_save_sender
+                                                            .send(TxMetrics {
+                                                                success: false,
+                                                                elapsed: Some(batch_elapsed),
+                                                                slot_sent,
+                                                                slot_landed: None,
+                                                                slot_latency: None,
+                                                                rpc_name,
+                                                                index: tx_index,
+                                                                signature: signature.to_string(),
+                                                            })
+                                                            .await;
+                                                    }
+                                                }
+                                            }
+                                            _ => unreachable!(),
+                                        }
+                                    });
+                                    confirm_handles.push(hdl);
+                                }
+                                for h in confirm_handles {
+                                    let _ = h.await;
+                                }
+                            }
+                            Err(e) => {
+                                error!("batch send failed: {:?}", e);
+                            }
                         }
                     });
                     tx_handles.push(hdl);
+                } else {
+                    // Individual path: send each transaction separately
+                    for j in 1..=config.txns_per_run {
+                        if self.cancel.is_cancelled() {
+                            info!("cancellation signal received, exiting transaction loop");
+                            break 'outer;
+                        }
+                        let recent_blockhash = {
+                            let blk_hash = blk_hash.read().unwrap();
+                            (*blk_hash).unwrap()
+                        };
+                        let tx_save_sender = self.tx_subscribe_sender.clone();
+                        let slot_sent = curr_slot.load(Ordering::Relaxed);
+                        let rpc_name = rpc.name();
+                        let rpc_sender = rpc.clone();
+                        let client = self.client.clone();
+                        let http_rpc = http_rpc.clone();
+                        let hdl = tokio::spawn(async move {
+                            let index = (i - 1) * config.txns_per_run + j;
+                            if let Err(e) = Self::send_and_confirm_transaction(
+                                index,
+                                rpc_sender,
+                                recent_blockhash,
+                                slot_sent,
+                                tx_save_sender,
+                                rpc_name,
+                                http_rpc,
+                                client,
+                            )
+                            .await
+                            {
+                                error!("error in send_and_confirm_transaction {:?}", e);
+                            }
+                        });
+                        tx_handles.push(hdl);
+                    }
                 }
             }
+
             //run delay if not last loop
             if i != config.runs {
                 info!("taking a breather...");
