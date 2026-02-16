@@ -16,6 +16,7 @@ pub mod jito;
 pub mod solana_rpc;
 pub mod transaction;
 mod iris_paladin;
+mod iris_binary_batch;
 
 #[derive(Debug, Clone)]
 pub enum TxResult {
@@ -118,6 +119,16 @@ pub fn create_tx_sender(
         }
         RpcType::IrisBatch => {
             let tx_sender = iris_batch::IrisBatchTxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for iris batch"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::IrisBinaryBatch => {
+            let tx_sender = iris_binary_batch::IrisBinaryBatchTxSender::new(
                 name,
                 rpc_config.url,
                 rpc_config.auth.expect("use api key for iris batch"),
