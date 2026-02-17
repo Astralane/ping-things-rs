@@ -30,7 +30,8 @@ pub enum RpcType {
     Iris,
     IrisPaladin,
     IrisBatch,
-    IrisBinaryBatch
+    IrisBinaryBatch,
+    IrisBinary,
 }
 #[derive(Clone, Debug, Deserialize)]
 pub struct RpcConfig {

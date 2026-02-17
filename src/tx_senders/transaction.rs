@@ -108,16 +108,11 @@ pub fn build_transaction_with_config(
                     tx_config.tip,
                 )
             }
-            RpcType::Iris => system_instruction::transfer(
+            RpcType::Iris | RpcType::IrisPaladin | RpcType::IrisBatch | RpcType::IrisBinaryBatch | RpcType::IrisBinary => system_instruction::transfer(
                 &tx_config.keypair.pubkey(),
                 &Pubkey::from_str(IRIS_TIP).unwrap(),
                 tx_config.tip,
-            ),
-            RpcType::IrisPaladin | RpcType::IrisBatch | RpcType::IrisBinaryBatch => system_instruction::transfer(
-                &tx_config.keypair.pubkey(),
-                &Pubkey::from_str(IRIS_TIP).unwrap(),
-                tx_config.tip,
-            ),
+            )
         };
         instructions.push(tip_instruction);
     }

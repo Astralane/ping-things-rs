@@ -17,6 +17,7 @@ pub mod solana_rpc;
 pub mod transaction;
 mod iris_paladin;
 mod iris_binary_batch;
+mod iris_binary;
 
 #[derive(Debug, Clone)]
 pub enum TxResult {
@@ -132,6 +133,16 @@ pub fn create_tx_sender(
                 name,
                 rpc_config.url,
                 rpc_config.auth.expect("use api key for iris batch"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::IrisBinary => {
+            let tx_sender = iris_binary::IrisBinaryTxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for iris"),
                 tx_config,
                 client,
             );
