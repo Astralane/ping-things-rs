@@ -77,12 +77,9 @@ impl TxSender for IrisBinaryBatchTxSender {
 
         let mut binary_body = Vec::new();
 
-        let count = indices.len() as u32;
-        binary_body.extend_from_slice(&count.to_le_bytes());
-
         for tx_bytes in &tx_data_vec {
-            let len = tx_bytes.len() as u32;
-            binary_body.extend_from_slice(&len.to_le_bytes());
+            let len = tx_bytes.len() as u16;
+            binary_body.extend_from_slice(&len.to_be_bytes());
             binary_body.extend_from_slice(tx_bytes);
         }
 
@@ -99,7 +96,7 @@ impl TxSender for IrisBinaryBatchTxSender {
 
         let status = response.status();
         let body_text = response.text().await?;
-
+        println!("{}", body_text);
         if !status.is_success() {
             return Err(anyhow::anyhow!(
                 "binary batch failed, body {}, status: {}",
