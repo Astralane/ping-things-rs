@@ -312,11 +312,8 @@ impl Bench {
                                     let hdl = tokio::spawn(async move {
                                         match result {
                                             TxResult::Signature(signature) => {
-                                                match Self::confirm_transaction(
-                                                    signature,
-                                                    http_rpc,
-                                                )
-                                                .await
+                                                match Self::confirm_transaction(signature, http_rpc)
+                                                    .await
                                                 {
                                                     Ok(slot_landed) => {
                                                         let latency =

@@ -16,7 +16,7 @@ pub struct PingThingsArgs {
     pub compute_unit_limit: u32,
     pub tip: u64,
     pub verbose_log: bool,
-    pub max_retries: u64
+    pub max_retries: u64,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
@@ -32,6 +32,7 @@ pub enum RpcType {
     IrisBatch,
     IrisBinaryBatch,
     IrisBinary,
+    IrisPlainTextBatch,
 }
 #[derive(Clone, Debug, Deserialize)]
 pub struct RpcConfig {

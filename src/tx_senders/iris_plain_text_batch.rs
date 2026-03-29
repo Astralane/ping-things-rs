@@ -80,12 +80,7 @@ impl TxSender for IrisBatchTxSender {
             })
             .collect();
 
-        let body = json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "sendBatch",
-            "params": [encoded_txns, {"mevProtect": false}]
-        });
+        let body = encoded_txns.join(",");
 
         info!("sending batch of {} txns to {}", indices.len(), self.url);
 
@@ -93,7 +88,7 @@ impl TxSender for IrisBatchTxSender {
             .client
             .post(&self.url)
             .header("api_key", &self.auth)
-            .json(&body)
+            .body(body)
             .send()
             .await?;
 

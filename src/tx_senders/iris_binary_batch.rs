@@ -59,15 +59,17 @@ impl TxSender for IrisBinaryBatchTxSender {
     }
 
     /// Send multiple transactions in a binary batch format.
-    async fn send_batch(
-        &self,
-        indices: &[(u32, Hash)],
-    ) -> anyhow::Result<Vec<TxResult>> {
+    async fn send_batch(&self, indices: &[(u32, Hash)]) -> anyhow::Result<Vec<TxResult>> {
         let mut expected_sigs = Vec::with_capacity(indices.len());
         let mut tx_data_vec = Vec::with_capacity(indices.len());
 
         for &(index, blockhash) in indices {
-            let tx = build_transaction_with_config(&self.tx_config, &RpcType::IrisBatch, index, blockhash);
+            let tx = build_transaction_with_config(
+                &self.tx_config,
+                &RpcType::IrisBatch,
+                index,
+                blockhash,
+            );
             let sig = *tx.get_signature();
             info!("sig : {}", sig.to_string());
             expected_sigs.push(sig);
@@ -83,7 +85,11 @@ impl TxSender for IrisBinaryBatchTxSender {
             binary_body.extend_from_slice(tx_bytes);
         }
 
-        info!("sending binary batch of {} txns to {}", indices.len(), self.url);
+        info!(
+            "sending binary batch of {} txns to {}",
+            indices.len(),
+            self.url
+        );
 
         let response = self
             .client
@@ -105,36 +111,40 @@ impl TxSender for IrisBinaryBatchTxSender {
             ));
         }
 
-
-        let signatures: Vec<TxResult> = if body_text.trim().starts_with('{') || body_text.trim().starts_with('[') {
-            let parsed: serde_json::Value = serde_json::from_str(&body_text)?;
-            if let Some(result_array) = parsed["result"].as_array() {
-                result_array
-                    .iter()
-                    .map(|v| {
-                        let sig_str = v.as_str().unwrap_or("");
-                        let sig = Signature::from_str(sig_str)
-                            .unwrap_or_else(|_| panic!("invalid signature in batch response: {}", sig_str));
-                        TxResult::Signature(sig)
-                    })
-                    .collect()
-            } else if let Some(result_array) = parsed.as_array() {
-                result_array
-                    .iter()
-                    .map(|v| {
-                        let sig_str = v.as_str().unwrap_or("");
-                        let sig = Signature::from_str(sig_str)
-                            .unwrap_or_else(|_| panic!("invalid signature in batch response: {}", sig_str));
-                        TxResult::Signature(sig)
-                    })
-                    .collect()
+        let signatures: Vec<TxResult> =
+            if body_text.trim().starts_with('{') || body_text.trim().starts_with('[') {
+                let parsed: serde_json::Value = serde_json::from_str(&body_text)?;
+                if let Some(result_array) = parsed["result"].as_array() {
+                    result_array
+                        .iter()
+                        .map(|v| {
+                            let sig_str = v.as_str().unwrap_or("");
+                            let sig = Signature::from_str(sig_str).unwrap_or_else(|_| {
+                                panic!("invalid signature in batch response: {}", sig_str)
+                            });
+                            TxResult::Signature(sig)
+                        })
+                        .collect()
+                } else if let Some(result_array) = parsed.as_array() {
+                    result_array
+                        .iter()
+                        .map(|v| {
+                            let sig_str = v.as_str().unwrap_or("");
+                            let sig = Signature::from_str(sig_str).unwrap_or_else(|_| {
+                                panic!("invalid signature in batch response: {}", sig_str)
+                            });
+                            TxResult::Signature(sig)
+                        })
+                        .collect()
+                } else {
+                    return Err(anyhow::anyhow!(
+                        "unexpected JSON response format: {}",
+                        body_text
+                    ));
+                }
             } else {
-                return Err(anyhow::anyhow!("unexpected JSON response format: {}", body_text));
-            }
-        } else {
-
-            expected_sigs.into_iter().map(TxResult::Signature).collect()
-        };
+                expected_sigs.into_iter().map(TxResult::Signature).collect()
+            };
 
         info!(
             "binary batch returned {} signatures from {}",

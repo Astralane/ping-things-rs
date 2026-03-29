@@ -12,12 +12,13 @@ pub mod blockxroute;
 pub mod constants;
 mod iris;
 mod iris_batch;
+mod iris_binary;
+mod iris_binary_batch;
+mod iris_paladin;
+mod iris_plain_text_batch;
 pub mod jito;
 pub mod solana_rpc;
 pub mod transaction;
-mod iris_paladin;
-mod iris_binary_batch;
-mod iris_binary;
 
 #[derive(Debug, Clone)]
 pub enum TxResult {
@@ -51,10 +52,7 @@ pub trait TxSender: Sync + Send {
 
     /// Send multiple transactions in a single API call.
     /// Default implementation sends them individually.
-    async fn send_batch(
-        &self,
-        indices: &[(u32, Hash)],
-    ) -> anyhow::Result<Vec<TxResult>> {
+    async fn send_batch(&self, indices: &[(u32, Hash)]) -> anyhow::Result<Vec<TxResult>> {
         let mut results = Vec::with_capacity(indices.len());
         for &(index, blockhash) in indices {
             results.push(self.send_transaction(index, blockhash).await?);
@@ -120,6 +118,16 @@ pub fn create_tx_sender(
         }
         RpcType::IrisBatch => {
             let tx_sender = iris_batch::IrisBatchTxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for iris batch"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::IrisPlainTextBatch => {
+            let tx_sender = iris_plain_text_batch::IrisBatchTxSender::new(
                 name,
                 rpc_config.url,
                 rpc_config.auth.expect("use api key for iris batch"),

@@ -87,8 +87,7 @@ impl TxSender for JitoTxSender {
         let tx = self.build_transaction_with_config(index, recent_blockhash);
         let signature = tx.get_signature();
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
-        let encoded_transaction = base64::prelude::BASE64_STANDARD
-            .encode(tx_bytes);
+        let encoded_transaction = base64::prelude::BASE64_STANDARD.encode(tx_bytes);
         let body = json!({
             "jsonrpc": "2.0",
             "id": 1,
@@ -99,12 +98,7 @@ impl TxSender for JitoTxSender {
         });
         debug!("sending tx: {}", body.to_string());
         let tx_url = format!("{}/api/v1/transactions?uuid={}", self.url, self.auth);
-        let response = self
-            .client
-            .post(&tx_url)
-            .json(&body)
-            .send()
-            .await?;
+        let response = self.client.post(&tx_url).json(&body).send().await?;
         let status = response.status();
         let body = response.text().await?;
         if !status.is_success() {
