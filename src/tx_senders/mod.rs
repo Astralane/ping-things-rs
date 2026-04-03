@@ -1,4 +1,5 @@
 use crate::config::{RpcConfig, RpcType};
+use crate::tx_senders::iris_quic::IrisQuicTxSender;
 use crate::tx_senders::jito::JitoTxSender;
 use crate::tx_senders::solana_rpc::GenericRpc;
 use crate::tx_senders::transaction::TransactionConfig;
@@ -16,6 +17,7 @@ mod iris_binary;
 mod iris_binary_batch;
 mod iris_paladin;
 mod iris_plain_text_batch;
+pub mod iris_quic;
 mod moon_binary_batch;
 pub mod jito;
 pub mod solana_rpc;
@@ -173,6 +175,15 @@ pub fn create_tx_sender(
                 rpc_config.auth.expect("use api key for moon"),
                 tx_config,
                 client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::IrisQuic => {
+            let tx_sender = IrisQuicTxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for iris quic"),
+                tx_config,
             );
             Arc::new(tx_sender)
         }

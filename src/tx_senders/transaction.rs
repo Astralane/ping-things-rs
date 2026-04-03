@@ -4,13 +4,13 @@ use crate::tx_senders::constants::{
     TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET,
 };
 use rand::Rng;
-use solana_sdk::compute_budget::ComputeBudgetInstruction;
+use solana_compute_budget_interface::ComputeBudgetInstruction;
 use solana_sdk::hash::Hash;
 use solana_sdk::instruction::{AccountMeta, Instruction};
 use solana_sdk::message::Message;
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signature::{EncodableKey, Keypair, Signer};
-use solana_sdk::system_instruction;
+use solana_system_interface::instruction as system_instruction;
 use solana_sdk::transaction::Transaction;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -118,7 +118,8 @@ pub fn build_transaction_with_config(
             | RpcType::IrisBatch
             | RpcType::IrisBinaryBatch
             | RpcType::IrisBinary
-            | RpcType::IrisPlainTextBatch => system_instruction::transfer(
+            | RpcType::IrisPlainTextBatch
+            | RpcType::IrisQuic => system_instruction::transfer(
                 &tx_config.keypair.pubkey(),
                 &Pubkey::from_str(IRIS_TIP).unwrap(),
                 tx_config.tip,
