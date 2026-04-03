@@ -114,12 +114,13 @@ impl Bench {
             .send_transaction(tx_index, recent_blockhash)
             .await?;
 
+        let send_elapsed = tx_result.send_elapsed_ms();
         let now = tokio::time::Instant::now();
         let subscription_result = match tx_result.clone() {
-            TxResult::Signature(signature) => {
+            TxResult::Signature(signature, _) => {
                 Self::confirm_transaction(signature, http_client).await
             }
-            TxResult::BundleID(id) => unreachable!(),
+            TxResult::BundleID(_, _) => unreachable!(),
         };
 
         if let Ok(slot_landed) = subscription_result {
@@ -128,6 +129,7 @@ impl Bench {
                 .send(TxMetrics {
                     success: true,
                     elapsed: Some(start.elapsed().as_millis() as u64),
+                    send_elapsed: Some(send_elapsed),
                     slot_sent,
                     slot_landed: Some(slot_landed),
                     slot_latency: Some(latency),
@@ -148,6 +150,7 @@ impl Bench {
                 .send(TxMetrics {
                     success: false,
                     elapsed: None,
+                    send_elapsed: Some(send_elapsed),
                     slot_sent,
                     slot_landed: None,
                     slot_latency: None,
@@ -295,11 +298,9 @@ impl Bench {
                         let start = tokio::time::Instant::now();
                         match rpc_sender.send_batch(&indices).await {
                             Ok(results) => {
-                                let batch_elapsed = start.elapsed().as_millis() as u64;
                                 info!(
-                                    "batch send completed: {} txns in {}ms",
+                                    "batch send completed: {} txns",
                                     results.len(),
-                                    batch_elapsed
                                 );
                                 // Confirm each signature individually
                                 let mut confirm_handles = Vec::new();
@@ -308,20 +309,24 @@ impl Bench {
                                     let rpc_name = rpc_name.clone();
                                     let tx_save_sender = tx_save_sender.clone();
                                     let http_rpc = http_rpc_clone.clone();
+                                    let send_elapsed = result.send_elapsed_ms();
 
                                     let hdl = tokio::spawn(async move {
                                         match result {
-                                            TxResult::Signature(signature) => {
+                                            TxResult::Signature(signature, _) => {
+                                                let confirm_start = tokio::time::Instant::now();
                                                 match Self::confirm_transaction(signature, http_rpc)
                                                     .await
                                                 {
                                                     Ok(slot_landed) => {
                                                         let latency =
                                                             slot_landed.saturating_sub(slot_sent);
+                                                        let elapsed = send_elapsed + confirm_start.elapsed().as_millis() as u64;
                                                         let _ = tx_save_sender
                                                             .send(TxMetrics {
                                                                 success: true,
-                                                                elapsed: Some(batch_elapsed),
+                                                                elapsed: Some(elapsed),
+                                                                send_elapsed: Some(send_elapsed),
                                                                 slot_sent,
                                                                 slot_landed: Some(slot_landed),
                                                                 slot_latency: Some(latency),
@@ -339,7 +344,8 @@ impl Bench {
                                                         let _ = tx_save_sender
                                                             .send(TxMetrics {
                                                                 success: false,
-                                                                elapsed: Some(batch_elapsed),
+                                                                elapsed: None,
+                                                                send_elapsed: Some(send_elapsed),
                                                                 slot_sent,
                                                                 slot_landed: None,
                                                                 slot_latency: None,

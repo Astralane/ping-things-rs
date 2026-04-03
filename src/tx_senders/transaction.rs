@@ -1,6 +1,6 @@
 use crate::config::{PingThingsArgs, RpcType};
 use crate::tx_senders::constants::{
-    BX_MEMO_MARKER_MSG, IRIS_TIP, JITO_TIP_WALLET, MEMO_PROGRAM, NOZOMI_TIP,
+    BX_MEMO_MARKER_MSG, IRIS_TIP, JITO_TIP_WALLET, MEMO_PROGRAM, MOON_TIP, NOZOMI_TIP,
     TRADER_API_MEMO_PROGRAM, TRADER_API_TIP_WALLET,
 };
 use rand::Rng;
@@ -82,6 +82,8 @@ pub fn build_transaction_with_config(
 
     let memo_instruction = create_random_memo_instruction(tx_config.keypair.pubkey());
     instructions.push(memo_instruction);
+    
+
 
     if tx_config.tip > 0 {
         let tip_instruction = match rpc_type {
@@ -121,6 +123,11 @@ pub fn build_transaction_with_config(
                 &Pubkey::from_str(IRIS_TIP).unwrap(),
                 tx_config.tip,
             ),
+            RpcType::MoonBinaryBatch => system_instruction::transfer(
+                &tx_config.keypair.pubkey(),
+                &Pubkey::from_str(MOON_TIP).unwrap(),
+                tx_config.tip,
+            ),
         };
         instructions.push(tip_instruction);
     }
@@ -131,6 +138,7 @@ pub fn build_transaction_with_config(
         pay,
     );
     instructions.push(self_transfer_instruction);
+
 
     //add memo for blockxroute transaction
     // not required if enterprise

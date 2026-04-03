@@ -15,6 +15,7 @@ use solana_sdk::signature::Signature;
 use solana_sdk::transaction::Transaction;
 use solana_transaction_status::UiTransactionEncoding;
 use std::str::FromStr;
+use tokio::time::Instant;
 use tracing::{debug, info};
 
 pub struct IrisTxSender {
@@ -86,6 +87,7 @@ impl TxSender for IrisTxSender {
         });
         debug!("sending tx: {}", body.to_string());
         // info!("sending to url: {}", self.url);
+        let start = Instant::now();
         let response = self
             .client
             .post(&self.url)
@@ -95,6 +97,7 @@ impl TxSender for IrisTxSender {
             .await?;
         let status = response.status();
         let body = response.text().await?;
+        let send_elapsed_ms = start.elapsed().as_millis() as u64;
         if !status.is_success() {
             return Err(anyhow::anyhow!(
                 "failed to send tx, body {}, status: {}",
@@ -106,6 +109,6 @@ impl TxSender for IrisTxSender {
         let signature_response = Signature::from_str(&response.result)?;
         info!("signature got back from iris: {}", signature_response);
         assert_eq!(signature, &signature_response);
-        Ok(TxResult::Signature(signature_response))
+        Ok(TxResult::Signature(signature_response, send_elapsed_ms))
     }
 }

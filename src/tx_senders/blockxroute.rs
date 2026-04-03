@@ -10,6 +10,7 @@ use solana_sdk::hash::Hash;
 use solana_sdk::signature::Signature;
 use solana_sdk::transaction::Transaction;
 use std::str::FromStr;
+use tokio::time::Instant;
 
 pub struct BlockXRouteTxSender {
     url: String,
@@ -73,6 +74,7 @@ impl TxSender for BlockXRouteTxSender {
             "fastBestEffort": true,
             "useStakedRPCs": true
         });
+        let start = Instant::now();
         let response = self
             .client
             .post(&self.url)
@@ -82,12 +84,13 @@ impl TxSender for BlockXRouteTxSender {
             .await?;
         let status = response.status();
         let body = response.text().await?;
+        let send_elapsed_ms = start.elapsed().as_millis() as u64;
         if !status.is_success() {
             return Err(anyhow::anyhow!("failed to send tx: {}", body));
         }
         let parsed_resp = serde_json::from_str::<BlockxRouteResponse>(&body)
             .context("cannot deserialize signature")?;
         let sig = Signature::from_str(&parsed_resp.signature).context("cannot parse signature")?;
-        Ok(TxResult::Signature(sig))
+        Ok(TxResult::Signature(sig, send_elapsed_ms))
     }
 }

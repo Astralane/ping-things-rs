@@ -9,6 +9,7 @@ use solana_client::rpc_client::SerializableTransaction;
 use solana_sdk::hash::Hash;
 use solana_sdk::signature::Signature;
 use std::str::FromStr;
+use tokio::time::Instant;
 use tracing::info;
 
 pub struct IrisBatchTxSender {
@@ -76,6 +77,7 @@ impl TxSender for IrisBatchTxSender {
                 let sig = *tx.get_signature();
                 expected_sigs.push(sig);
                 let tx_bytes = bincode::serialize(&tx).expect("cannot serialize tx to bincode");
+                info!("------------------------------{}", tx_bytes.len());
                 base64::prelude::BASE64_STANDARD.encode(tx_bytes)
             })
             .collect();
@@ -84,6 +86,7 @@ impl TxSender for IrisBatchTxSender {
 
         info!("sending batch of {} txns to {}", indices.len(), self.url);
 
+        let start = Instant::now();
         let response = self
             .client
             .post(&self.url)
@@ -94,6 +97,7 @@ impl TxSender for IrisBatchTxSender {
 
         let status = response.status();
         let body_text = response.text().await?;
+        let send_elapsed_ms = start.elapsed().as_millis() as u64;
 
         if !status.is_success() {
             return Err(anyhow::anyhow!(
@@ -115,7 +119,7 @@ impl TxSender for IrisBatchTxSender {
                 let sig = Signature::from_str(sig_str).unwrap_or_else(|_| {
                     panic!("invalid signature in sendBatch response: {}", sig_str)
                 });
-                TxResult::Signature(sig)
+                TxResult::Signature(sig, send_elapsed_ms)
             })
             .collect();
 
@@ -124,6 +128,7 @@ impl TxSender for IrisBatchTxSender {
             signatures.len(),
             self.name
         );
+        info!("result: {:?}", result_array);
 
         Ok(signatures)
     }

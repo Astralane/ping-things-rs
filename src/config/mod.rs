@@ -33,6 +33,7 @@ pub enum RpcType {
     IrisBinaryBatch,
     IrisBinary,
     IrisPlainTextBatch,
+    MoonBinaryBatch,
 }
 #[derive(Clone, Debug, Deserialize)]
 pub struct RpcConfig {

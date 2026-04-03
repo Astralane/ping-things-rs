@@ -9,6 +9,7 @@ use solana_rpc_client_api::config::RpcSendTransactionConfig;
 use solana_sdk::hash::Hash;
 use solana_transaction_status::UiTransactionEncoding;
 use std::sync::Arc;
+use tokio::time::Instant;
 
 #[derive(Clone)]
 pub struct GenericRpc {
@@ -28,6 +29,7 @@ pub struct TxMetrics {
     pub slot_landed: Option<u64>,
     pub slot_latency: Option<u64>,
     pub elapsed: Option<u64>, // in milliseconds
+    pub send_elapsed: Option<u64>, // HTTP round-trip time in milliseconds
 }
 
 impl GenericRpc {
@@ -55,6 +57,7 @@ impl TxSender for GenericRpc {
     ) -> anyhow::Result<TxResult> {
         let transaction =
             build_transaction_with_config(&self.tx_config, &self.rpc_type, index, recent_blockhash);
+        let start = Instant::now();
         let sig = self
             .http_rpc
             .send_transaction_with_config(
@@ -69,6 +72,7 @@ impl TxSender for GenericRpc {
             )
             .await
             .context(format!("Failed to send transaction for {}", self.name))?;
-        Ok(TxResult::Signature(sig))
+        let send_elapsed_ms = start.elapsed().as_millis() as u64;
+        Ok(TxResult::Signature(sig, send_elapsed_ms))
     }
 }

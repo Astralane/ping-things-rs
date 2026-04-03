@@ -16,21 +16,31 @@ mod iris_binary;
 mod iris_binary_batch;
 mod iris_paladin;
 mod iris_plain_text_batch;
+mod moon_binary_batch;
 pub mod jito;
 pub mod solana_rpc;
 pub mod transaction;
 
 #[derive(Debug, Clone)]
 pub enum TxResult {
-    Signature(Signature),
-    BundleID(String),
+    Signature(Signature, u64),   // (sig, send_elapsed_ms)
+    BundleID(String, u64),       // (bundle_id, send_elapsed_ms)
+}
+
+impl TxResult {
+    pub fn send_elapsed_ms(&self) -> u64 {
+        match self {
+            TxResult::Signature(_, ms) => *ms,
+            TxResult::BundleID(_, ms) => *ms,
+        }
+    }
 }
 
 impl Into<String> for TxResult {
     fn into(self) -> String {
         match self {
-            TxResult::Signature(sig) => sig.to_string(),
-            TxResult::BundleID(bundle_id) => bundle_id,
+            TxResult::Signature(sig, _) => sig.to_string(),
+            TxResult::BundleID(bundle_id, _) => bundle_id,
         }
     }
 }
@@ -151,6 +161,16 @@ pub fn create_tx_sender(
                 name,
                 rpc_config.url,
                 rpc_config.auth.expect("use api key for iris"),
+                tx_config,
+                client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::MoonBinaryBatch => {
+            let tx_sender = moon_binary_batch::MoonBinaryBatchTxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for moon"),
                 tx_config,
                 client,
             );

@@ -7,6 +7,7 @@ use solana_client::rpc_client::SerializableTransaction;
 use solana_sdk::hash::Hash;
 use solana_sdk::signature::Signature;
 use std::str::FromStr;
+use tokio::time::Instant;
 use tracing::info;
 
 pub struct IrisBinaryBatchTxSender {
@@ -91,6 +92,7 @@ impl TxSender for IrisBinaryBatchTxSender {
             self.url
         );
 
+        let start = Instant::now();
         let response = self
             .client
             .post(&self.url)
@@ -102,6 +104,7 @@ impl TxSender for IrisBinaryBatchTxSender {
 
         let status = response.status();
         let body_text = response.text().await?;
+        let send_elapsed_ms = start.elapsed().as_millis() as u64;
         println!("{}", body_text);
         if !status.is_success() {
             return Err(anyhow::anyhow!(
@@ -122,7 +125,7 @@ impl TxSender for IrisBinaryBatchTxSender {
                             let sig = Signature::from_str(sig_str).unwrap_or_else(|_| {
                                 panic!("invalid signature in batch response: {}", sig_str)
                             });
-                            TxResult::Signature(sig)
+                            TxResult::Signature(sig, send_elapsed_ms)
                         })
                         .collect()
                 } else if let Some(result_array) = parsed.as_array() {
@@ -133,7 +136,7 @@ impl TxSender for IrisBinaryBatchTxSender {
                             let sig = Signature::from_str(sig_str).unwrap_or_else(|_| {
                                 panic!("invalid signature in batch response: {}", sig_str)
                             });
-                            TxResult::Signature(sig)
+                            TxResult::Signature(sig, send_elapsed_ms)
                         })
                         .collect()
                 } else {
@@ -143,7 +146,7 @@ impl TxSender for IrisBinaryBatchTxSender {
                     ));
                 }
             } else {
-                expected_sigs.into_iter().map(TxResult::Signature).collect()
+                expected_sigs.into_iter().map(|sig| TxResult::Signature(sig, send_elapsed_ms)).collect()
             };
 
         info!(

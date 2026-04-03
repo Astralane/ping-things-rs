@@ -9,6 +9,7 @@ use solana_client::rpc_client::SerializableTransaction;
 use solana_sdk::hash::Hash;
 use solana_sdk::transaction::Transaction;
 use std::str::FromStr;
+use tokio::time::Instant;
 
 pub struct IrisBinaryTxSender {
     url: String,
@@ -61,6 +62,7 @@ impl TxSender for IrisBinaryTxSender {
         let signature = tx.get_signature();
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
         // info!("sending to url: {}", self.url);
+        let start = Instant::now();
         let response = self
             .client
             .post(&self.url)
@@ -70,6 +72,7 @@ impl TxSender for IrisBinaryTxSender {
             .await?;
         let status = response.status();
         let body = response.text().await?;
+        let send_elapsed_ms = start.elapsed().as_millis() as u64;
         if !status.is_success() {
             return Err(anyhow::anyhow!(
                 "failed to send tx, body {}, status: {}",
@@ -77,6 +80,6 @@ impl TxSender for IrisBinaryTxSender {
                 status
             ));
         }
-        Ok(TxResult::Signature(*signature))
+        Ok(TxResult::Signature(*signature, send_elapsed_ms))
     }
 }

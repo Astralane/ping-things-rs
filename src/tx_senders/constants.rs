@@ -11,6 +11,9 @@ pub const JITO_RPC_URL: &str = "https://mainnet.block-engine.jito.wtf:443/api/v1
 pub const MEMO_PROGRAM: Pubkey = pubkey!("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 
 pub const NOZOMI_TIP: &str = "TEMPaMeCRFAS9EKF53Jd6KpHxgL47uWLcpFArU1Fanq";
-pub const IRIS_TIP: &str = "astrazznxsGUhWShqgNtAdfrzP2G83DzcWVJDxwV9bF";
+pub const IRIS_TIP: &str = "AsTrACB6f3qtnZ1jpwPUui9714sHsS9Jtgaiy1ay4gAx";
+// pub const IRIS_TIP: &str = "TEMPaMeCRFAS9EKF53Jd6KpHxgL47uWLcpFArU1Fanq";
+
+pub const MOON_TIP: &str = "MoonTipWa1let12345678901234567890123456A";
 
 pub const MIN_TIP_AMOUNT: u64 = 1_000_000;
