@@ -92,7 +92,7 @@ impl TxSender for IrisTxSender {
         let response = self
             .client
             .post(&self.url)
-            .header("api_key", &self.auth)
+            .header("x-api-key", &self.auth)
             .json(&body)
             .send()
             .await?;
