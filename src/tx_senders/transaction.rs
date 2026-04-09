@@ -119,7 +119,8 @@ pub fn build_transaction_with_config(
             | RpcType::IrisBinaryBatch
             | RpcType::IrisBinary
             | RpcType::IrisPlainTextBatch
-            | RpcType::IrisQuic => system_instruction::transfer(
+            | RpcType::IrisQuic
+            | RpcType::IrisRsQuic => system_instruction::transfer(
                 &tx_config.keypair.pubkey(),
                 &Pubkey::from_str(IRIS_TIP).unwrap(),
                 tx_config.tip,
