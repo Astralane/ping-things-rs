@@ -27,8 +27,8 @@ pub struct TxMetrics {
     pub success: bool,
     pub slot_sent: u64,
     pub slot_landed: Option<u64>,
-    pub slot_latency: Option<u64>,
     pub elapsed: Option<u64>, // in milliseconds
+    pub slot_latency: Option<u64>,
     pub send_elapsed: Option<u64>, // HTTP round-trip time in milliseconds
 }
 
