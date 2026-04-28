@@ -32,6 +32,7 @@ pub struct Bench {
     cancel: CancellationToken,
     rpcs: Vec<Arc<dyn TxSender>>,
     client: Client,
+    shred_map: ShredMap,
 }
 
 impl Bench {
@@ -66,6 +67,7 @@ impl Bench {
             rpcs,
             cancel: cancellation_token,
             client,
+            shred_map,
         }
     }
 
@@ -115,6 +117,7 @@ impl Bench {
         rpc_name: String,
         http_client: Arc<RpcClient>,
         client: Client,
+        shred_map: ShredMap,
     ) -> anyhow::Result<()> {
         let start = tokio::time::Instant::now();
         let tx_result = rpc_sender
@@ -132,6 +135,21 @@ impl Bench {
 
         if let Ok(slot_landed) = subscription_result {
             let latency = slot_landed.saturating_sub(slot_sent);
+            let (shred_seen_us, shred_seen_slot) = match tx_result.clone() {
+                TxResult::Signature(sig, _) => shred_map
+                    .get(&sig)
+                    .and_then(|e| {
+                        e.seen_at.map(|seen| {
+                            (
+                                seen.duration_since(e.sent_at).as_micros() as u64,
+                                e.seen_slot,
+                            )
+                        })
+                    })
+                    .map(|(us, slot)| (Some(us), slot))
+                    .unwrap_or((None, None)),
+                _ => (None, None),
+            };
             tx_save_sender
                 .send(TxMetrics {
                     success: true,
@@ -143,6 +161,8 @@ impl Bench {
                     rpc_name,
                     index: tx_index,
                     signature: tx_result.into(),
+                    shred_seen_us,
+                    shred_seen_slot,
                 })
                 .await
                 .expect("cannot send to file saver loop");
@@ -153,6 +173,21 @@ impl Bench {
                 now.elapsed().as_secs(),
                 tx_result
             );
+            let (shred_seen_us, shred_seen_slot) = match tx_result.clone() {
+                TxResult::Signature(sig, _) => shred_map
+                    .get(&sig)
+                    .and_then(|e| {
+                        e.seen_at.map(|seen| {
+                            (
+                                seen.duration_since(e.sent_at).as_micros() as u64,
+                                e.seen_slot,
+                            )
+                        })
+                    })
+                    .map(|(us, slot)| (Some(us), slot))
+                    .unwrap_or((None, None)),
+                _ => (None, None),
+            };
             tx_save_sender
                 .send(TxMetrics {
                     success: false,
@@ -164,6 +199,8 @@ impl Bench {
                     rpc_name,
                     index: tx_index,
                     signature: tx_result.into(),
+                    shred_seen_us,
+                    shred_seen_slot,
                 })
                 .await
                 .expect("failed to send to receiver");
@@ -340,6 +377,8 @@ impl Bench {
                                                                 rpc_name,
                                                                 index: tx_index,
                                                                 signature: signature.to_string(),
+                                                                shred_seen_us: None,
+                                                                shred_seen_slot: None,
                                                             })
                                                             .await;
                                                     }
@@ -359,6 +398,8 @@ impl Bench {
                                                                 rpc_name,
                                                                 index: tx_index,
                                                                 signature: signature.to_string(),
+                                                                shred_seen_us: None,
+                                                                shred_seen_slot: None,
                                                             })
                                                             .await;
                                                     }
@@ -396,6 +437,7 @@ impl Bench {
                         let rpc_sender = rpc.clone();
                         let client = self.client.clone();
                         let http_rpc = http_rpc.clone();
+                        let shred_map = self.shred_map.clone();
                         let hdl = tokio::spawn(async move {
                             let index = (i - 1) * config.txns_per_run + j;
                             if let Err(e) = Self::send_and_confirm_transaction(
@@ -407,6 +449,7 @@ impl Bench {
                                 rpc_name,
                                 http_rpc,
                                 client,
+                                shred_map,
                             )
                             .await
                             {

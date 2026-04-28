@@ -30,6 +30,8 @@ pub struct TxMetrics {
     pub elapsed: Option<u64>, // in milliseconds
     pub slot_latency: Option<u64>,
     pub send_elapsed: Option<u64>, // HTTP round-trip time in milliseconds
+    pub shred_seen_us: Option<u64>, // microseconds from send -> first observed in shreds
+    pub shred_seen_slot: Option<u64>, // slot in which the txn was first observed in shreds
 }
 
 impl GenericRpc {

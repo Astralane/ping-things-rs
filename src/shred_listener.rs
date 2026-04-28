@@ -7,13 +7,25 @@ use std::collections::{HashMap, HashSet};
 use std::net::UdpSocket;
 use std::sync::Arc;
 use std::thread::JoinHandle;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct ShredEntry {
+    pub sent_at: Instant,
+    pub seen_at: Option<Instant>,
     pub seen_slot: Option<Slot>,
+}
+
+impl ShredEntry {
+    pub fn new_now() -> Self {
+        Self {
+            sent_at: Instant::now(),
+            seen_at: None,
+            seen_slot: None,
+        }
+    }
 }
 
 pub type ShredMap = Arc<DashMap<Signature, ShredEntry>>;
@@ -72,10 +84,15 @@ fn try_deshred(slot: Slot, state: &mut SlotState, map: &ShredMap) {
                             .flat_map(|e| &e.transactions)
                             .flat_map(|tx| &tx.signatures)
                             .collect();
+                        let now = Instant::now();
                         for sig in signatures {
                             if let Some(mut e) = map.get_mut(sig) {
-                                e.seen_slot = Some(slot);
-                                info!("MATCH sig={sig} slot={slot}");
+                                if e.seen_at.is_none() {
+                                    e.seen_at = Some(now);
+                                    e.seen_slot = Some(slot);
+                                    let elapsed_us = now.duration_since(e.sent_at).as_micros();
+                                    info!("MATCH sig={sig} slot={slot} shred_seen_us={elapsed_us}");
+                                }
                             }
                         }
                     }

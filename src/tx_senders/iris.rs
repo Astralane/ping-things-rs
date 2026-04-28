@@ -71,7 +71,7 @@ impl TxSender for IrisTxSender {
     ) -> anyhow::Result<TxResult> {
         let tx = self.build_transaction_with_config(index, recent_blockhash);
         let signature = tx.get_signature();
-        self.shred_map.insert(*signature, ShredEntry::default());
+        self.shred_map.insert(*signature, ShredEntry::new_now());
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
         let encoded_transaction = base64::prelude::BASE64_STANDARD.encode(tx_bytes);
         let config = RpcSendTransactionConfig {
