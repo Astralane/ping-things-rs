@@ -1,4 +1,5 @@
 use crate::config::{RpcConfig, RpcType};
+use crate::shred_listener::ShredMap;
 use crate::tx_senders::iris_quic::IrisQuicTxSender;
 use crate::tx_senders::iris_rs_quic::IrisRsQuicTxSender;
 use crate::tx_senders::jito::JitoTxSender;
@@ -80,6 +81,7 @@ pub fn create_tx_sender(
     rpc_config: RpcConfig,
     tx_config: TransactionConfig,
     client: Client,
+    shred_map: ShredMap,
 ) -> Arc<dyn TxSender> {
     match rpc_config.rpc_type {
         RpcType::BlockXRoute => {
@@ -117,6 +119,7 @@ pub fn create_tx_sender(
                 rpc_config.auth.expect("use api key for iris"),
                 tx_config,
                 client,
+                shred_map,
             );
             Arc::new(tx_sender)
         }

@@ -4,14 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-solana-client = { version = "=3.0.0" }
-solana-rpc-client-api = { version = "=3.0.0" }
+solana-client = "3"
+solana-rpc-client-api = "3"
 solana-sdk = "=3.0.0"
-solana-transaction-status = "=3.0.0"
-# New component crates for removed modules 
-solana-commitment-config = "=3.0.0"
-solana-system-interface = { version = "=3.0.0", features = ["bincode"] }
-solana-compute-budget-interface = "=3.0.0"
+solana-transaction-status = "=3.1.12"
+# New component crates for removed modules
+solana-commitment-config = "3"
+solana-system-interface = { version = "3", features = ["bincode"] }
+solana-compute-budget-interface = "3"
 tokio = { version = "1", features = ["full"] }
 tokio-util = "0.7.12"
 simplelog = "0.12.2"
@@ -34,6 +34,10 @@ bincode = "1.3.3"
 base64 = "0.22.1"
 astralane-quic-client = { git = "https://github.com/Astralane/astralane-quic-client" }
 quinn = "0.11"
-solana-tls-utils = "=3.0.0"
-solana-keypair = "=3.0.0"
+solana-tls-utils = "3"
+solana-keypair = "3"
 dashmap = "6"
+solana-ledger = { version = "=3.1.12", features = ["agave-unstable-api"] }
+solana-entry = "=3.1.12"
+solana-packet = "3"
+solana-clock = "3"

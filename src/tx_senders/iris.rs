@@ -1,4 +1,5 @@
 use crate::config::RpcType;
+use crate::shred_listener::{ShredEntry, ShredMap};
 use crate::tx_senders::transaction::{build_transaction_with_config, TransactionConfig};
 use crate::tx_senders::{TxResult, TxSender};
 use anyhow::Context;
@@ -24,6 +25,7 @@ pub struct IrisTxSender {
     auth: String,
     client: Client,
     tx_config: TransactionConfig,
+    shred_map: ShredMap,
 }
 
 impl IrisTxSender {
@@ -33,6 +35,7 @@ impl IrisTxSender {
         auth: String,
         tx_config: TransactionConfig,
         client: Client,
+        shred_map: ShredMap,
     ) -> Self {
         Self {
             url,
@@ -40,6 +43,7 @@ impl IrisTxSender {
             name,
             tx_config,
             client,
+            shred_map,
         }
     }
 
@@ -67,6 +71,7 @@ impl TxSender for IrisTxSender {
     ) -> anyhow::Result<TxResult> {
         let tx = self.build_transaction_with_config(index, recent_blockhash);
         let signature = tx.get_signature();
+        self.shred_map.insert(*signature, ShredEntry::default());
         let tx_bytes = bincode::serialize(&tx).context("cannot serialize tx to bincode")?;
         let encoded_transaction = base64::prelude::BASE64_STANDARD.encode(tx_bytes);
         let config = RpcSendTransactionConfig {
@@ -92,7 +97,7 @@ impl TxSender for IrisTxSender {
         let response = self
             .client
             .post(&self.url)
-            .header("x-api-key", &self.auth)
+            // .header(api-key", &self.auth)
             .json(&body)
             .send()
             .await?;

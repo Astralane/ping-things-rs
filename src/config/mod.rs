@@ -17,6 +17,8 @@ pub struct PingThingsArgs {
     pub tip: u64,
     pub verbose_log: bool,
     pub max_retries: u64,
+    #[serde(default)]
+    pub shred_bind_addr: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]

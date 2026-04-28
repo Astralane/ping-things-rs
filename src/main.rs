@@ -2,13 +2,17 @@ extern crate core;
 
 use crate::bench::Bench;
 use crate::config::PingThingsArgs;
+use crate::shred_listener::{spawn_shred_listener, ShredMap};
 use crate::state_listeners::ChainListener;
+use dashmap::DashMap;
+use std::sync::Arc;
 use tokio::signal;
 use tokio_util::sync::CancellationToken;
 use tracing::info;
 
 mod bench;
 mod config;
+mod shred_listener;
 mod state_listeners;
 mod tx_senders;
 
@@ -58,7 +62,12 @@ async fn main() {
     {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
     }
-    let bench = Bench::new(config, cancellation_token.clone());
+    let shred_map: ShredMap = Arc::new(DashMap::new());
+    let shred_handle = config.shred_bind_addr.clone().map(|addr| {
+        spawn_shred_listener(addr, shred_map.clone(), cancellation_token.clone())
+    });
+
+    let bench = Bench::new(config, cancellation_token.clone(), shred_map.clone());
     bench
         .start(
             chain_listener.current_slot.clone(),
@@ -68,5 +77,8 @@ async fn main() {
     cancellation_token.cancel();
     info!("waiting for chain listener to exit");
     let _ = chain_listener.hdl.await;
+    if let Some(h) = shred_handle {
+        let _ = h.join();
+    }
     info!("exiting main");
 }

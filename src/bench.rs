@@ -1,4 +1,5 @@
 use crate::config::PingThingsArgs;
+use crate::shred_listener::ShredMap;
 use crate::tx_senders::constants::JITO_RPC_URL;
 use crate::tx_senders::jito::JitoBundleStatusResponse;
 use crate::tx_senders::solana_rpc::TxMetrics;
@@ -34,7 +35,11 @@ pub struct Bench {
 }
 
 impl Bench {
-    pub fn new(config: PingThingsArgs, cancellation_token: CancellationToken) -> Self {
+    pub fn new(
+        config: PingThingsArgs,
+        cancellation_token: CancellationToken,
+        shred_map: ShredMap,
+    ) -> Self {
         let (tx_subscribe_sender, tx_subscribe_receiver) = tokio::sync::mpsc::channel(100);
         let tx_config: TransactionConfig = config.clone().into();
         let client = Client::new();
@@ -42,7 +47,9 @@ impl Bench {
             .rpc
             .clone()
             .into_iter()
-            .map(|(name, rpc)| create_tx_sender(name, rpc, tx_config.clone(), client.clone()))
+            .map(|(name, rpc)| {
+                create_tx_sender(name, rpc, tx_config.clone(), client.clone(), shred_map.clone())
+            })
             .collect::<Vec<Arc<dyn TxSender>>>();
 
         let rpc_names = rpcs.iter().map(|rpc| rpc.name()).collect::<Vec<String>>();
