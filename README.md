@@ -46,8 +46,8 @@ tip: 1000000
 ### Configuration Options
 - rpc: RPC endpoints for the Solana cluster.
   - url: endpoint for the rpc
-  - rpc_type: type of endpoint can be one of: `"solanarpc", "jito", "blockxroute"`
-  - auth: auth header for for sending transaction, used in "blockxroute"
+  - rpc_type: type of endpoint can be one of: `"solanarpc", "jito", "blockxroute", "temporal", "iris", "irispaladin", "iris2", "irisb"`
+  - auth: auth header or api key for sending transaction, used in "blockxroute", "jito", "iris", "irispaladin", "iris2", "irisb"
 - txns_per_run: Number of transactions per run.
 - txn_delay: Delay between transactions in seconds.
 - runs: Number of runs to execute.
@@ -57,4 +57,27 @@ tip: 1000000
 - compute_unit_price: Price per compute unit.
 - compute_unit_limit: Limit of compute units.
 - verbose_log: Enable verbose logging.
-- tip: attach tips for jito and blockxroute transactions
+- tip: attach tips for jito, blockxroute, temporal and iris transactions
+- max_retries: `maxRetries` passed to `sendTransaction` for solanarpc and iris
+
+### Astralane endpoints
+- `iris`: JSON-RPC `sendTransaction` with the key in the `api_key` header, e.g. `https://<region>.gateway.astralane.io/iris`. The same type works for `/express`.
+- `iris2`: v2 text endpoint, base64 transaction as a `text/plain` body to `<url>?api-key=<key>&method=sendTransaction`, e.g. `https://<region>.gateway.astralane.io/iris2`.
+- `irisb`: v2 binary endpoint, raw serialized transaction as an `application/octet-stream` body with the same query string, e.g. `https://<region>.gateway.astralane.io/irisb`.
+- `irispaladin`: JSON-RPC `sendPaladin` with the key in the `api_key` header.
+
+```yaml
+rpc:
+  "jp-iris":
+    url: "https://jp.gateway.astralane.io/iris"
+    auth: "<ApiKey>"
+    rpc_type: "iris"
+  "jp-iris2":
+    url: "https://jp.gateway.astralane.io/iris2"
+    auth: "<ApiKey>"
+    rpc_type: "iris2"
+  "jp-irisb":
+    url: "https://jp.gateway.astralane.io/irisb"
+    auth: "<ApiKey>"
+    rpc_type: "irisb"
+```

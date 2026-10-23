@@ -113,11 +113,13 @@ pub fn build_transaction_with_config(
                 &Pubkey::from_str(IRIS_TIP).unwrap(),
                 tx_config.tip,
             ),
-            RpcType::IrisPaladin => system_instruction::transfer(
-                &tx_config.keypair.pubkey(),
-                &Pubkey::from_str(IRIS_TIP).unwrap(),
-                tx_config.tip,
-            ),
+            RpcType::IrisPaladin | RpcType::Iris2 | RpcType::IrisB => {
+                system_instruction::transfer(
+                    &tx_config.keypair.pubkey(),
+                    &Pubkey::from_str(IRIS_TIP).unwrap(),
+                    tx_config.tip,
+                )
+            }
         };
         instructions.push(tip_instruction);
     }

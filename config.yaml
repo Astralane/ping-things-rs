@@ -13,6 +13,18 @@ rpc :
   "temporal":
     url: "http://fra1.nozomi.temporal.xyz/?c="
     rpc_type: "temporal"
+  "iris":
+    url: "https://fr.gateway.astralane.io/iris"
+    auth: "<ApiKey>"
+    rpc_type: "iris"
+  "iris2":
+    url: "https://fr.gateway.astralane.io/iris2"
+    auth: "<ApiKey>"
+    rpc_type: "iris2"
+  "irisb":
+    url: "https://fr.gateway.astralane.io/irisb"
+    auth: "<ApiKey>"
+    rpc_type: "irisb"
 
 txns_per_run: 10
 txn_delay: 1

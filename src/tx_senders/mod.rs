@@ -11,6 +11,7 @@ use std::sync::Arc;
 pub mod blockxroute;
 pub mod constants;
 mod iris;
+mod iris_v2;
 pub mod jito;
 pub mod solana_rpc;
 pub mod transaction;
@@ -93,6 +94,21 @@ pub fn create_tx_sender(
                 rpc_config.auth.expect("use api key for iris paladin"),
                 tx_config,
                 client,
+            );
+            Arc::new(tx_sender)
+        }
+        RpcType::Iris2 | RpcType::IrisB => {
+            let encoding = match rpc_config.rpc_type {
+                RpcType::IrisB => iris_v2::Encoding::Binary,
+                _ => iris_v2::Encoding::Base64Text,
+            };
+            let tx_sender = iris_v2::IrisV2TxSender::new(
+                name,
+                rpc_config.url,
+                rpc_config.auth.expect("use api key for iris2/irisb"),
+                tx_config,
+                client,
+                encoding,
             );
             Arc::new(tx_sender)
         }
