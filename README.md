@@ -15,8 +15,14 @@ cd ping-things-rs
 ```
 
 ### Build the project:
+Install Rust with [rustup](https://rustup.rs/). The repository's
+`rust-toolchain.toml` automatically selects Rust 1.85.1, which is compatible with
+the Solana 2.0.x dependencies. Newer compilers can fail inside `solana-client`
+with `E0277` (`!: FromIterator<()>`) because of changes to never-type fallback.
+Use the committed lockfile to keep dependency versions reproducible:
+
 ```
-RUST_LOG=info cargo build --release
+RUST_LOG=info cargo build --release --locked
 ```
 ### Run the benchmark:
 ```
